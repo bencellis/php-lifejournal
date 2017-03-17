@@ -7,7 +7,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#"><?php echo $_SERVER['HTTP_HOST'] ?></a>
+          <a class="navbar-brand" href="#"><?php echo $title ?></a>
         </div>
       </div>
     </nav>
