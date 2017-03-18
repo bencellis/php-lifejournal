@@ -1,7 +1,95 @@
 <?php
-
+require_once('config.php');
 require_once('db_lib.php');
 
+function getEntryEditLinks(){
+
+}
+
+
+
+
+function getJournalEntries($pagingparams, $deleted = false) {
+	global $dbconfig, $config;
+	$db = new dbfunctions($dbconfig);
+	$journalentries = array();
+
+	// lets get the raw records
+	if ($rawrecs = $db->getJournalEntries($pagingparams, $deleted)) {
+		foreach ($rawrecs as $rawrec) {
+			// massage the data
+			$journalentry['recid'] = $rawrec['recid'];
+			$journalentry['deleted'] = $rawrec['deleted'] ? 'Deleted' : 'No';
+			$journalentry['source'] = $rawrec['sourcetype'];
+			$journalentry['realdate'] = $rawrec['startdate'];		// for display purposes
+
+			// details
+			$detaillength = $config['detaillength'];
+			if (strlen($rawrec['details']) > $detaillength) {
+				// reduce length
+				$journalentry['details'] = substr($rawrec['details'], 0, $detaillength);
+				// now add elipses from last space
+				$journalentry['details'] = substr($rawrec['details'], 0, strrpos($journalentry['details'], ' ')) . ' ...';
+			}else{
+				$journalentry['details'] = $rawrec['details'];
+			}
+
+
+			// date stuff
+			if ($rawrec['startdate']) {
+				$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['startdate']);
+				if ($rawrec['allyear']) {
+					$journalentry['date'] = $phpdate->format('Y');
+				}else if ($rawrec['allmonth']) {
+					$journalentry['date'] = $phpdate->format('F, Y');
+				}else if ($rawrec['allday']) {
+					$journalentry['date'] = $phpdate->format('l j M, Y');
+				}else {
+					$phptime = DateTime::createFromFormat('H:i:s', $rawrec['starttime']);
+					$journalentry['date'] = $phpdate->format('l j M, Y') . ' @ ' . $phptime->format('H:i');
+				}
+			}else{
+				$journalentry['date'] = 'Not Dated';
+			}
+
+			// only if available
+			if ($rawrec['enddate']) {
+				$journalentry['date'] .=  '<br />To ';
+				$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['enddate']);
+				$journalentry['date'] .= $phpdate->format('l j M, Y');
+				if ($rawrec['endtime'] !== '00:00:00') {
+					$phptime = DateTime::createFromFormat('H:i:s', $rawrec['endtime']);
+					$journalentry['date'] .= ' @ ' . $phptime->format('H:i');
+				}
+			}
+			$journalentries[] = $journalentry;
+		}
+	}
+
+	return $journalentries;
+
+}
+
+
+/**
+ * function to work out the paging information
+ */
+function getPagingParams($config) {
+	$pagingparams = array();
+
+	$request = isset($_REQUEST['paging']) ? unserialize(base64_decode(urldecode($_REQUEST['paging']))) : $_REQUEST;
+
+	$pagingparams['page'] = isset($request['page']) ? $request['page'] : 1;
+	$pagingparams['norecs'] = isset($request['norecs']) ? $request['norecs'] : $config['defaultnumrecords'];
+	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'DESC';		// descending default
+	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate';	// startdate default
+
+	//this is one that does not get passed around but is used in links
+	$paging = urlencode(base64_encode(serialize($pagingparams)));
+	$pagingparams['paging'] = $paging;
+
+	return $pagingparams;
+}
 
 function getEmptyRecord($today = null) {
 	return array(
@@ -39,14 +127,14 @@ function getSubmittedRecord($params) {
  * @param str $url
  * @param bool $permanent status of redirect
  */
-function redirect($url, $permanent = false){
+function RedirectTo($url, $permanent = false){
 	//if (headers_sent() === false){
 		header('Location: ' . $url, true, ($permanent === true) ? 301 : 302);
 	//}
 	die('You are being redirected');			// need to die to ensure no further processing
 }
 
-function process_postdata($params) {
+function ProcessPostData($params) {
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
 	$errorstr = '';

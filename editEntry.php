@@ -1,6 +1,6 @@
 <?php
 require_once('includes/lib.php');
-require_once('includes/config.php');
+//require_once('includes/config.php');
 
 $selectedtext = 'selected';
 $checkedtext = 'checked';
@@ -20,12 +20,18 @@ if (!empty($_GET['recid'])) {
 	//this is a get record and we have several options
 
 }elseif (!empty($_POST)) {
+
 	if (!empty($_POST['canceledit'])) {
 		//redirect back to home page
-		redirect('index.php');
+		$redirecturl = 'index.php';
+		if (isset($_REQUEST['paging'])) {		// only if we have paging stuff to remember
+			$pagingstuff = getPagingParams($config);
+			$redirecturl .= '?paging=' . $pagingstuff['paging'];
+		}
+		RedirectTo($redirecturl);
 	}
 
-	if ($errormessage = process_postdata($_POST)) {
+	if ($errormessage = ProcessPostData($_POST)) {
 		//restore the values submitted for correction
 		$record = getSubmittedRecord($_POST);
 	}else{
@@ -110,6 +116,7 @@ if ($record['endtime']) {
 						<input type="hidden" name="recid" value="<?php echo $record['recid']; ?>" />
 						<input type="hidden" name="deleted" value="<?php echo $record['deleted']; ?>" />
 						<input type="hidden" name="sourcetype" value="<?php echo $record['sourcetype']; ?>" />
+						<input type="hidden" name="paging" value="<?php echo isset($_REQUEST['paging']) ? $_REQUEST['paging'] : ''; ?>" />
 					</div>
 				</div>
 				<!--  start dates -->

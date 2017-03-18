@@ -1,9 +1,31 @@
 /*
+ * 
  * Custom JS Code
  */
 
 $(function() {
 	
+	$('.delEntry').click(function(e){
+		return confirm('Are you sure you want to do this?');
+	});
+	
+	$('.linkEntry').click(function(e){
+		if (input = prompt('Enter Id of record you want to link this record to')) {
+			// add recid to link
+			if (Number.isInteger(Number(input))) {
+				// redirect to ulr plus 
+				var connectedid = '&connectid=' + input;
+				document.location = this.href + connectedid;
+			}else{
+				alert('Only Ids (numbers) are allowed here.');
+				return false;
+			}
+		}else{
+			return false;
+		}
+	});
+	
+	// TODO check we on right page for this
 	// on page unload check for checked checkboxes
 	updateFollowingFlds($('#id_allYear'));
 	updateFollowingFlds($('#id_allMonth')); 
@@ -51,35 +73,35 @@ $(function() {
 	 * Function to validate date - http://www.jquerybyexample.net/2011/12/validate-date-using-jquery.html
 	 */
 	function isDate(txtDate){
-		  var currVal = txtDate;
-		  if(currVal == '')
-		    return false;
-		  
-		  //Declare Regex  
-		  var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/; 
-		  var dtArray = currVal.match(rxDatePattern); // is format OK?
+	  var currVal = txtDate;
+	  if(currVal == '')
+	    return false;
+	  
+	  //Declare Regex  
+	  var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/; 
+	  var dtArray = currVal.match(rxDatePattern); // is format OK?
 
-		  if (dtArray == null)
-		     return false;
-		 
-		  //Checks for mm/dd/yyyy format.
-		  dtMonth = dtArray[1];
-		  dtDay= dtArray[3];
-		  dtYear = dtArray[5];
+	  if (dtArray == null)
+	     return false;
+	 
+	  //Checks for mm/dd/yyyy format.
+	  dtMonth = dtArray[1];
+	  dtDay= dtArray[3];
+	  dtYear = dtArray[5];
 
-		  if (dtMonth < 1 || dtMonth > 12)
-		      return false;
-		  else if (dtDay < 1 || dtDay> 31)
-		      return false;
-		  else if ((dtMonth==4 || dtMonth==6 || dtMonth==9 || dtMonth==11) && dtDay ==31)
-		      return false;
-		  else if (dtMonth == 2)
-		  {
-		     var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
-		     if (dtDay> 29 || (dtDay ==29 && !isleap))
-		          return false;
-		  }
-		  return true;
-		}	
+	  if (dtMonth < 1 || dtMonth > 12)
+	      return false;
+	  else if (dtDay < 1 || dtDay> 31)
+	      return false;
+	  else if ((dtMonth==4 || dtMonth==6 || dtMonth==9 || dtMonth==11) && dtDay ==31)
+	      return false;
+	  else if (dtMonth == 2)
+	  {
+	     var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+	     if (dtDay> 29 || (dtDay ==29 && !isleap))
+	          return false;
+	  }
+	  return true;
+	}	
 });
 

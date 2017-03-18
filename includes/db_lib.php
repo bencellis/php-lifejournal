@@ -4,7 +4,8 @@ class dbfunctions {
 
 	private $mysqli = null;
 
-	public function __construct(array $settings) {
+	public function __construct(array $settings, $forcenew = false) {
+		// TODO if we already exist return existing connection
 		$message = '';
 		$this->mysqli = new mysqli($settings['dbserver'], $settings['dbuser'], $settings['dbpasswd'], $settings['dbname'], $settings['dbport']);
 		if ($this->mysqli->connect_errno) {
@@ -75,5 +76,34 @@ class dbfunctions {
 			$sql = "UPDATE journal SET " . $sqlfields . "WHERE recid = " . $recid;
 		}
 		return($this->mysqli->query($sql));
+	}
+
+	public function getJournalEntries($pagingparams, $deleted = false) {
+		$journalentries = array();
+
+		$sql = 'SELECT * FROM journal';
+
+		$delfldval = $deleted ? 1 : 0;
+		$sql .= " WHERE deleted = $delfldval";
+/*
+	$pagingparams['page'] = isset($_REQUEST['page']) ? $_REQUEST['page'] : 1;
+	$pagingparams['norecs'] = isset($_REQUEST['norecs']) ? $_REQUEST['norecs'] : $config['defaultnumrecords'];
+	$pagingparams['dir'] = isset($_REQUEST['dir']) ? $_REQUEST['dir'] : 'DESC';		// descending default
+	$pagingparams['oby'] = isset($_REQUEST['oby']) ? $_REQUEST['oby'] : 'datestart';	// datestart default
+*/
+		$sql .= ' ORDER BY ' . $pagingparams['oby'] . ' ' . $pagingparams['dir'];
+
+		$limitstart = $pagingparams['page'] - 1;
+		$limitto = $pagingparams['page'] * $pagingparams['norecs'];
+
+		$sql .= " LIMIT $limitstart, $limitto";
+
+		if ($results = $this->mysqli->query($sql)) {
+			while ($result = $results->fetch_assoc()) {
+				$journalentries[] = $result;
+			}
+		}
+
+		return $journalentries;
 	}
 }

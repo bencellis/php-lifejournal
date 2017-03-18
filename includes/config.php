@@ -7,10 +7,11 @@ $amazonids = array(
 	'com'	=> '',
 );
 $keywords = array();
-$title = 'In Hindsight';
-$welcomemsg = 'Welcome';
+$title = "Life Journal by Mukudu";
+$welcomemsg = 'In Hindsight – Ben’s Story';
 $author = 'Benjamin Ellis, Mukudu Sites, Mukudu Ltd';
-$description = 'The In Hindsight Site';
+$description = "In Hindsight – Ben's Story";
+$byline = "An ordinary person's extraordinary life.";
 
 //cookie consent
 $theme = "light-top";		// for dark sites
@@ -32,4 +33,6 @@ $dbconfig = array(
 // application configuration
 $config = array(
 	'startyear' => 1965,
+	'defaultnumrecords' => 25,
+	'detaillength' => 120,
 );
