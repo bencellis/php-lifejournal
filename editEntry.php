@@ -1,9 +1,5 @@
 <?php
 require_once('includes/lib.php');
-//require_once('includes/config.php');
-
-$selectedtext = 'selected';
-$checkedtext = 'checked';
 
 $today = new DateTime();
 $years = range($today->format("Y"), $config['startyear']);
@@ -16,43 +12,46 @@ $successmessage = '';
 
 $record = array();
 
-if (!empty($_GET['recid'])) {
-	//this is a get record and we have several options
-
-}elseif (!empty($_POST)) {
-
-	if (!empty($_POST['canceledit'])) {
+if (!empty($_POST)) {
+	if (isset($_POST['canceledit'])) {
 		//redirect back to home page
 		$redirecturl = 'index.php';
 		if (isset($_REQUEST['paging'])) {		// only if we have paging stuff to remember
 			$pagingstuff = getPagingParams($config);
 			$redirecturl .= '?paging=' . $pagingstuff['paging'];
 		}
+		error_log("Redirecting to '$redirecturl'");
 		RedirectTo($redirecturl);
 	}
 
 	if ($errormessage = ProcessPostData($_POST)) {
-		//restore the values submitted for correction
+		//TODO restore the values submitted for correction
 		$record = getSubmittedRecord($_POST);
 	}else{
 		$successmessage = 'Record has been saved - click cancel to return to main screen.';
 		// get a new record
 		$record = getEmptyRecord($today);
 	}
-
+}else if (!empty($_GET['recid'])) {
+	//this is a get record and we have several options
+	if (!$record = getJounalEntry($_GET['recid'])) {
+		$errormessage = 'Record Not found';
+		$record = getEmptyRecord($today);
+	}
 }else{
 	// we are dealing with an new record
 	$record = getEmptyRecord($today);
 }
 
+
 // we need to ensure we have date objects to work with
 $startdate = null;
 if ($record['startdate']) {
-	$startdate = DateTime::createFromFormat('d-m-Y', $record['startdate']);
+	$startdate = DateTime::createFromFormat('Y-m-d', $record['startdate']);
 }
 $enddate = null;
 if ($record['enddate']) {
-	$enddate = DateTime::createFromFormat('d-m-Y', $record['enddate']);
+	$enddate = DateTime::createFromFormat('Y-m-d', $record['enddate']);
 }
 $starttime = null;
 if ($record['starttime']) {
@@ -109,7 +108,7 @@ if ($record['endtime']) {
       <div class="row">
         <div class="col-md-12">
 			<!-- form -->
-			<form method="post">
+			<form name="editForm" id="id_editForm" method="POST">
 				<!-- hidden fields -->
 				<div class="row">
 					<div class="col-md-12">
@@ -126,7 +125,7 @@ if ($record['endtime']) {
 					</div>
 					<div class="col-md-2">
 						<label for="id_startYear">Start Year</label>
-						<select class="form-control form-startflds" name="startYear" class="form-control form-startflds" id="id_startYear">
+						<select name="startYear" class="form-control form-startflds" id="id_startYear">
 							<?php
 								$selectedyear = $startdate ? $startdate->format('Y') : 0;
 								echo "<option " . (($selectedyear == 0) ? 'selected' : '') . " value='0'>Undated</option>\n";
@@ -142,7 +141,7 @@ if ($record['endtime']) {
 					</div>
 					<div class="col-md-2">
 						<label for="id_startMonth">Start Month</label>
-						<select class="form-control form-startflds" name="startMonth" class="form-control form-startflds" id="id_startMonth">
+						<select name="startMonth" class="form-control form-startflds" id="id_startMonth">
 							<?php
 								$selectedmonth = $startdate ? $startdate->format('m') : 0;
 								foreach ($months as $month) {
@@ -157,7 +156,7 @@ if ($record['endtime']) {
 					</div>
 					<div class="col-md-2">
 						<label for="id_startDay">Start Day</label>
-						<select class="form-control form-startflds" name="startDay" class="form-control form-startflds" id="id_startDay">
+						<select name="startDay" class="form-control form-startflds" id="id_startDay">
 							<?php
 								$selectedday = $startdate ? $startdate->format('d'): 0;
 								foreach ($days as $day) {
@@ -172,7 +171,7 @@ if ($record['endtime']) {
 					</div>
 					<div class="col-md-1">
 						<label for="id_startHour">Time</label>
-						<select class="form-control form-startflds" name="startHour" class="form-control form-startflds" id="id_startHour">
+						<select name="startHour" class="form-control form-startflds" id="id_startHour">
 							<?php
 								$selectedhour = $starttime ? $starttime->format('G') : 0;
 								foreach ($hours as $hour) {
@@ -183,7 +182,7 @@ if ($record['endtime']) {
 					</div>
 					<div class="col-md-1">
 						<label for="id_startMinute">&nbsp</label>
-						<select class="form-control form-startflds" name="startMinute" class="form-control form-startflds" id="id_startMinute">
+						<select name="startMinute" class="form-control form-startflds" id="id_startMinute">
 							<?php
 								$selectedminute = $starttime ? (int) $starttime->format('i') : 0;
 								foreach ($minutes as $minute) {
@@ -199,8 +198,8 @@ if ($record['endtime']) {
 						<strong>End Date</strong>
 					</div>
 					<div class="col-md-1">
-						<label for="id_isEvent">Same</label>
-						<input class="form-control form-startflds form-allfield" type="checkbox" <?php echo ($record['isEvent']) ? "checked" : ''; ?> name="isEvent" id ="id_isEvent" />
+						<label for="id_isevent">Same</label>
+						<input class="form-control form-startflds form-allfield" type="checkbox" <?php echo ($record['isevent']) ? "checked" : ''; ?> name="isevent" id ="id_isevent" />
 					</div>
 					<div class="col-md-2">
 						<label for="id_endYear">End Year</label>

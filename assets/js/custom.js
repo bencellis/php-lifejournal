@@ -25,12 +25,29 @@ $(function() {
 		}
 	});
 	
+	$('#id_filteryear').change(function(e){
+		if ( $(this).val() == 'all' || $(this).val() == 0 ) {
+			$('#id_filtermonth').val('all');
+			$('#id_filtermonth').prop('disabled', true);
+		}else{
+			$('#id_filtermonth').prop('disabled', false);
+		}
+	});
+	
 	// TODO check we on right page for this
 	// on page unload check for checked checkboxes
-	updateFollowingFlds($('#id_allYear'));
-	updateFollowingFlds($('#id_allMonth')); 
-	updateFollowingFlds($('#id_allDay')); 
-	updateFollowingFlds($('#id_startYear'));
+	if ($('#id_editForm').length > 0) {
+		if ($('#id_startYear').val() == 0) {
+			updateFollowingFlds($('#id_startYear'));
+		}else{
+			$('.form-allfield').each(function(){
+				if ($(this).prop('checked')) {
+					updateFollowingFlds($(this));
+					return false;
+				}
+			});
+		}
+	}
 	
 	// event functions
 	$('#id_startYear').change(function(){

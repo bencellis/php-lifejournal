@@ -57,6 +57,24 @@ class dbfunctions {
 
 	function saveJournalEntry($params) {
 		$sqlfields = '';
+		$recid = 0;
+		if (isset($params['recid'])) {
+			$recid = $params['recid'];
+			unset($params['recid']);
+		}
+
+		// we need to massage the $params to ensure any changes to the Boolean fields are reflected correctly
+		$boolfields = array('allyear', 'allmonth', 'allday',  'isevent');
+		foreach($boolfields as $bf) {
+			if (isset($params[$bf])) {
+				if (empty($params['startdate'])) {
+					$params[$bf] = 0;		// cannot have an all field if undated
+				}// else the setting value stands
+			}else{
+				$params[$bf] = 0;
+			}
+		}
+
 		foreach ($params as $fld => $val) {
 			if ($fld != 'recid') {
 				if ($sqlfields) {
@@ -66,37 +84,47 @@ class dbfunctions {
 
 				$val = (is_numeric($val)) ? $val : "'$val'";
 				$sqlfields .= "$fld = $val";
+			}else{
+				$recid = $val;
 			}
 		}
 
 		$sql = '';
-		if (empty($params['recid'])) {
+		if ($recid == 0) {
 			$sql = "INSERT INTO journal SET " . $sqlfields;
 		}else{
-			$sql = "UPDATE journal SET " . $sqlfields . "WHERE recid = " . $recid;
+			$sql = "UPDATE journal SET " . $sqlfields . " WHERE recid = " . $recid;
 		}
 		return($this->mysqli->query($sql));
 	}
 
-	public function getJournalEntries($pagingparams, $deleted = false) {
+	public function getJournalEntries($pagingparams) {
 		$journalentries = array();
+		$sql = '';
 
-		$sql = 'SELECT * FROM journal';
+		// do filtering
+		if (!isset($pagingparams['includedeleted'])) {
+			$sql .= ($sql ? ' AND ' : ' WHERE ') . 'deleted = 0';
+		}
 
-		$delfldval = $deleted ? 1 : 0;
-		$sql .= " WHERE deleted = $delfldval";
-/*
-	$pagingparams['page'] = isset($_REQUEST['page']) ? $_REQUEST['page'] : 1;
-	$pagingparams['norecs'] = isset($_REQUEST['norecs']) ? $_REQUEST['norecs'] : $config['defaultnumrecords'];
-	$pagingparams['dir'] = isset($_REQUEST['dir']) ? $_REQUEST['dir'] : 'DESC';		// descending default
-	$pagingparams['oby'] = isset($_REQUEST['oby']) ? $_REQUEST['oby'] : 'datestart';	// datestart default
-*/
+		if (isset($pagingparams['filteryear'])) {
+			$sql .= ($sql ? ' AND ' : ' WHERE ') . 'YEAR(startdate) = ' . $pagingparams['filteryear'];
+			if (isset($pagingparams['filtermonth'])) {
+				$sql .= ' AND MONTH(startdate) = ' . $pagingparams['filtermonth'];
+			}
+		}
+
+		$sql = 'SELECT * FROM journal' . $sql;
+
+		// ordering
 		$sql .= ' ORDER BY ' . $pagingparams['oby'] . ' ' . $pagingparams['dir'];
 
-		$limitstart = $pagingparams['page'] - 1;
+		// paging
+		$limitstart = ($pagingparams['page'] - 1) * $pagingparams['norecs'];
 		$limitto = $pagingparams['page'] * $pagingparams['norecs'];
-
 		$sql .= " LIMIT $limitstart, $limitto";
+
+		error_log($sql);
 
 		if ($results = $this->mysqli->query($sql)) {
 			while ($result = $results->fetch_assoc()) {
@@ -106,4 +134,33 @@ class dbfunctions {
 
 		return $journalentries;
 	}
+
+	public function isEntryConnectable($connectedid) {
+		$connectable = false;
+
+		$sql = "SELECT connectedid FROM journal WHERE recid = $connectedid";
+		if ($results = $this->mysqli->query($sql)) {
+			if ($result = $results->fetch_assoc()) {		// only one record
+				$connectable = $result['connectedid'] ? false : true;
+			}
+		}
+
+		return $connectable;
+	}
+
+	public function connectJournalEntries($recid, $connectedid) {
+		$sql = "UPDATE journal SET connectedid = $connectedid, deleted = 1 WHERE recid = $recid";
+		return $this->mysqli->query($sql);
+	}
+
+	function getJournalEntry($recid) {
+		$record = null;
+		$sql = "SELECT * FROM journal WHERE recid = $recid";
+		if ($results = $this->mysqli->query($sql)) {
+			$record = $results->fetch_assoc();		// only one record
+		}
+
+		return $record;
+	}
+
 }

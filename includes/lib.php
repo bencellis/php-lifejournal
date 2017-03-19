@@ -2,20 +2,41 @@
 require_once('config.php');
 require_once('db_lib.php');
 
-function getEntryEditLinks(){
+function markEntryAsDeleted($recid){
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	$errmsg = '';
 
+	if (!$db->deleteJournalEntry($recid)) {
+		$errmsg = 'Failed to save record because ' . $db->getLastError();
+	}
+	return $errmsg;
 }
 
+function connectJournalEntries($mainid, $connectedid) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	$errmsg = '';
 
+	// make sure the connected id actually exists
+	if ($db->isEntryConnectable($connectedid)) {
+		if (!$db->connectJournalEntries($mainid, $connectedid)) {
+			$errmsg = 'Failed to connect records because ' . $db->getLastError();
+		}
+	}else{
+		$errmsg = 'Connected ID cannot be used - may not exist or already connected';
+	}
 
+	return $errmsg;
+}
 
-function getJournalEntries($pagingparams, $deleted = false) {
+function getJournalEntries($pagingparams) {
 	global $dbconfig, $config;
 	$db = new dbfunctions($dbconfig);
 	$journalentries = array();
 
 	// lets get the raw records
-	if ($rawrecs = $db->getJournalEntries($pagingparams, $deleted)) {
+	if ($rawrecs = $db->getJournalEntries($pagingparams)) {
 		foreach ($rawrecs as $rawrec) {
 			// massage the data
 			$journalentry['recid'] = $rawrec['recid'];
@@ -70,7 +91,6 @@ function getJournalEntries($pagingparams, $deleted = false) {
 
 }
 
-
 /**
  * function to work out the paging information
  */
@@ -84,6 +104,43 @@ function getPagingParams($config) {
 	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'DESC';		// descending default
 	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate';	// startdate default
 
+	// filtering stuff
+	if (isset($request['clearfilter'])) {			/// clear all filters
+		if (isset($pagingparams['includedeleted'])) {
+			unset($pagingparams['includedeleted']);
+		}
+		if (isset($pagingparams['filteryear'])) {
+			unset($pagingparams['filteryear']);
+		}
+		if (isset($pagingparams['filtermonth'])) {
+			unset($pagingparams['filtermonth']);
+		}
+	}else if (isset($request['filterby'])) {
+		if (isset($request['includedeleted'])) {
+			$pagingparams['includedeleted'] = $request['includedeleted'];
+		}
+		if (isset($request['filteryear'])) {
+			if ($request['filteryear'] == 'all') {
+				if (isset($pagingparams['filteryear'])) {
+					unset($pagingparams['filteryear']);
+				}
+			}else{
+				$pagingparams['filteryear'] = $request['filteryear'];
+			}
+		}
+		if (isset($request['filtermonth'])) {
+			if ($pagingparams['filteryear']) {			// only if a filter year is selected
+				if ($request['filtermonth'] == 'all') {
+					if (isset($pagingparams['filtermonth'])){
+						unset($pagingparams['filtermonth']);
+					}
+				}else{
+					$pagingparams['filtermonth'] = $request['filtermonth'];
+				}
+			}
+		}
+	}
+
 	//this is one that does not get passed around but is used in links
 	$paging = urlencode(base64_encode(serialize($pagingparams)));
 	$pagingparams['paging'] = $paging;
@@ -94,13 +151,13 @@ function getPagingParams($config) {
 function getEmptyRecord($today = null) {
 	return array(
 		'recid' => 0,
-		'startdate' => $today ? $today->format('d-m-Y') : 0,
+		'startdate' => $today ? $today->format('Y-m-d') : 0,
 		'allyear' => 0,
 		'allmonth' => 0,
 		'allday' => 0,
-		'enddate' => 0,
+		'enddate' => $today ? $today->format('Y-m-d') : 0,
 		'starttime' => 0,
-		'isEvent' => 0,
+		'isevent' => 0,
 		'endtime' => 0,
 		'details' => '',
 		'deleted' => 0,
@@ -112,6 +169,18 @@ function getSubmittedRecord($params) {
 	$record = getEmptyRecord();
 
 	// TODO deal with the date and time fields
+// 	$params['startYear'] = 1;
+// 	$params['startMonth'] = 1;
+// 	$params['startDay'] = 1;
+// 	$params['startHour'] = 0;
+// 	$params['startMinute'] = 0;
+
+// 	$params['endYear'] = 1;
+// 	$params['endMonth'] = 1;
+// 	$params['endDay'] = 1;
+// 	$params['endHour'] = 0;
+// 	$params['endMinute'] = 0;
+
 	foreach($record as $fld => $val) {
 		if (isset($params[$fld])) {
 			$record[$fld] = $params[$fld];
@@ -119,6 +188,12 @@ function getSubmittedRecord($params) {
 	}
 
 	return $record;
+}
+
+function getJounalEntry($recid) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	return $db->getJournalEntry($recid);
 }
 
 /**
@@ -212,7 +287,7 @@ function ProcessPostData($params) {
 			}
 
 			// end date stuff
-			if (!empty($params['isEvent'])) {
+			if (!empty($params['isevent'])) {
 				$dbparams['isevent'] = 1;
 				$setenddate = false;
 			}
