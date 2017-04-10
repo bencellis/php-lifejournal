@@ -28,22 +28,24 @@ $today = new DateTime();
 $years = range($today->format("Y"), $config['startyear']);
 $months = range(1,12);
 
+$ishome = (empty($_REQUEST));			// if we coming to start again ????
 $pagingparams = getPagingParams($config);			// this get paging, ordering and filtering data
-
 
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
 
 $journalentries = getJournalEntries($pagingparams);
+
 $lastdisplayr = '';
-$ishome = ((empty($_POST) && empty($_GET)));
+
 
 // edit links
-$baselink = 'index.php?paging=' . $pagingparams['paging'] . '&action=';
+$paginglink = 'index.php';
+$baselink =  $paginglink . '?action=';
 $deletelink = $baselink . 'delete' . '&recid=';
 $connectlink = $baselink . 'connectwith' . '&recid=';
-$editlink = 'editEntry.php?paging=' . $pagingparams['paging'] . '&recid=';
 
-$newlink = 'editEntry.php' . ($ishome ? '' : '?paging=' . $pagingparams['paging']);
+$newlink = 'editEntry.php';
+$editlink = $newlink . '?recid=';
 
 //die('<pre>' . print_r($journalentries, true) . '</pre>');
 
@@ -84,7 +86,7 @@ $newlink = 'editEntry.php' . ($ishome ? '' : '?paging=' . $pagingparams['paging'
 		<div class="row">
 			<div class="col-md-12">
 				<div class="well well-lg">
-					<form method="POST" name="filterForm" id="id_filterForm" class="form-inline">
+					<form method="POST" action="<?php echo $paginglink; ?>" name="filterForm" id="id_filterForm" class="form-inline">
 						<div class="form-group col-md-2">
 							<h4>Filter records</h4>
 						</div>
@@ -186,7 +188,11 @@ $newlink = 'editEntry.php' . ($ishome ? '' : '?paging=' . $pagingparams['paging'
  	  <?php if (true): ?>
 	      <div class="row">
 	        <div class="col-md-12">
-				<div>Paging Area</div>
+				<div>
+					<hr />
+					<?php echo getPagingBar($paginglink, $pagingparams); ?>
+					<hr />
+				</div>
 	        </div>
 	      </div>
  	  <?php endif?>

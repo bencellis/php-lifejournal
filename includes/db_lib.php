@@ -40,7 +40,7 @@ class dbfunctions {
 
 	/*
 	  recid int(10) unsigned NOT NULL AUTO_INCREMENT,
-	  startdate date DEFAULT NULL,
+	  startdate date NOT NULL,
 	  allyear tinyint(1) NOT NULL DEFAULT '0',
 	  allmonth tinyint(1) NOT NULL DEFAULT '0',
 	  allday tinyint(1) NOT NULL DEFAULT '0',
@@ -50,7 +50,7 @@ class dbfunctions {
 	  endtime time DEFAULT '00:00:00',
 	  details text NOT NULL,
 	  deleted tinyint(1) NOT NULL DEFAULT '0',
-	  connectedid int(11) NOT NULL,
+	  connectedid int(11) DEFAULT NULL,
 	  sourcetype varchar(20) NOT NULL,
 	  sourceid varchar(254) DEFAULT NULL,
 	 */
@@ -80,9 +80,10 @@ class dbfunctions {
 				if ($sqlfields) {
 					$sqlfields .= ', ';
 				}
-				// we have to deal with date and time fields TODO
+				// TODO we have to deal with date and time fields
 
-				$val = (is_numeric($val)) ? $val : "'$val'";
+				$val = (is_numeric($val)) ? $val : "'" . $this->mysqli->real_escape_string($val) . "'";
+
 				$sqlfields .= "$fld = $val";
 			}else{
 				$recid = $val;
@@ -95,13 +96,26 @@ class dbfunctions {
 		}else{
 			$sql = "UPDATE journal SET " . $sqlfields . " WHERE recid = " . $recid;
 		}
+
 		return($this->mysqli->query($sql));
 	}
 
-	public function getJournalEntries($pagingparams) {
-		$journalentries = array();
-		$sql = '';
 
+	public function getJournalEntriesCount($pagingparams) {
+		$count = false;
+
+		$sql = 'SELECT COUNT(*) AS count FROM journal ' . $this->_getEntriesSubSQL($pagingparams);
+
+		if ($results = $this->mysqli->query($sql)) {
+			$result = $results->fetch_assoc();
+			$count = $result['count'];
+		}
+
+		return $count;
+	}
+
+	private function _getEntriesSubSQL($pagingparams) {
+		$sql = '';
 		// do filtering
 		if (!isset($pagingparams['includedeleted'])) {
 			$sql .= ($sql ? ' AND ' : ' WHERE ') . 'deleted = 0';
@@ -113,8 +127,13 @@ class dbfunctions {
 				$sql .= ' AND MONTH(startdate) = ' . $pagingparams['filtermonth'];
 			}
 		}
+		return $sql;
+	}
 
-		$sql = 'SELECT * FROM journal' . $sql;
+	public function getJournalEntries($pagingparams) {
+		$journalentries = array();
+
+		$sql = 'SELECT * FROM journal ' . $this->_getEntriesSubSQL($pagingparams);
 
 		// ordering
 		$sql .= ' ORDER BY ' . $pagingparams['oby'] . ' ' . $pagingparams['dir'];
@@ -124,7 +143,7 @@ class dbfunctions {
 		$limitto = $pagingparams['page'] * $pagingparams['norecs'];
 		$sql .= " LIMIT $limitstart, $limitto";
 
-		error_log($sql);
+		//error_log($sql);
 
 		if ($results = $this->mysqli->query($sql)) {
 			while ($result = $results->fetch_assoc()) {
@@ -160,6 +179,15 @@ class dbfunctions {
 			$record = $results->fetch_assoc();		// only one record
 		}
 
+		return $record;
+	}
+
+	function getJournalBySourceId($sourcetype, $sourceid) {
+		$record = null;
+		$sql = "SELECT * FROM journal WHERE sourcetype LIKE '$sourcetype' AND sourceid LIKE '$sourceid'";
+		if ($results = $this->mysqli->query($sql)) {
+			$record = $results->fetch_assoc();		// only one record
+		}
 		return $record;
 	}
 

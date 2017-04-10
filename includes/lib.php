@@ -95,16 +95,51 @@ function getJournalEntries($pagingparams) {
  * function to work out the paging information
  */
 function getPagingParams($config) {
+	global $dbconfig;
 	$pagingparams = array();
 
-	$request = isset($_REQUEST['paging']) ? unserialize(base64_decode(urldecode($_REQUEST['paging']))) : $_REQUEST;
+	session_start();			// start session
+	$request = $_SESSION;			// first get the session values if any
 
+	// then we overwrite any of the values with any in the REQUEST object
+	if (!empty($_REQUEST)) {
+		$request = array_merge($request, $_REQUEST);
+	}
+
+	error_log("This request is " . print_r($request, true));
+
+	// defaults
 	$pagingparams['page'] = isset($request['page']) ? $request['page'] : 1;
 	$pagingparams['norecs'] = isset($request['norecs']) ? $request['norecs'] : $config['defaultnumrecords'];
 	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'DESC';		// descending default
 	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate';	// startdate default
 
-	// filtering stuff
+	// check for filtering stuff
+	if (isset($request['includedeleted'])) {
+		$pagingparams['includedeleted'] = $request['includedeleted'];
+	}
+	if (isset($request['filteryear'])) {
+		if ($request['filteryear'] == 'all') {
+			if (isset($pagingparams['filteryear'])) {
+				unset($pagingparams['filteryear']);
+			}
+		}else{
+			$pagingparams['filteryear'] = $request['filteryear'];
+		}
+	}
+	if (isset($request['filtermonth'])) {
+		if ($pagingparams['filteryear']) {			// only if a filter year is selected
+			if ($request['filtermonth'] == 'all') {
+				if (isset($pagingparams['filtermonth'])){
+					unset($pagingparams['filtermonth']);
+				}
+			}else{
+				$pagingparams['filtermonth'] = $request['filtermonth'];
+			}
+		}
+	}
+
+	// filtering change stuff
 	if (isset($request['clearfilter'])) {			/// clear all filters
 		if (isset($pagingparams['includedeleted'])) {
 			unset($pagingparams['includedeleted']);
@@ -115,38 +150,53 @@ function getPagingParams($config) {
 		if (isset($pagingparams['filtermonth'])) {
 			unset($pagingparams['filtermonth']);
 		}
+		unset($request['trecs']);		// recount the records
 	}else if (isset($request['filterby'])) {
-		if (isset($request['includedeleted'])) {
-			$pagingparams['includedeleted'] = $request['includedeleted'];
-		}
-		if (isset($request['filteryear'])) {
-			if ($request['filteryear'] == 'all') {
-				if (isset($pagingparams['filteryear'])) {
-					unset($pagingparams['filteryear']);
-				}
-			}else{
-				$pagingparams['filteryear'] = $request['filteryear'];
-			}
-		}
-		if (isset($request['filtermonth'])) {
-			if ($pagingparams['filteryear']) {			// only if a filter year is selected
-				if ($request['filtermonth'] == 'all') {
-					if (isset($pagingparams['filtermonth'])){
-						unset($pagingparams['filtermonth']);
-					}
-				}else{
-					$pagingparams['filtermonth'] = $request['filtermonth'];
-				}
-			}
-		}
+		// this will be the 1st time we see a filter request
+		$pagingparams['page'] = 1; 			// leaving all the others as they are
+		unset($request['trecs']);		// recount the records
 	}
 
-	//this is one that does not get passed around but is used in links
-	$paging = urlencode(base64_encode(serialize($pagingparams)));
-	$pagingparams['paging'] = $paging;
+	// lets get the total count
+	if (!isset($request['trecs'])) {
+		// we go for the database count
+		$db = new dbfunctions($dbconfig);
+		$pagingparams['trecs'] = $db->getJournalEntriesCount($pagingparams);		// startdate default
+	}else{
+		$pagingparams['trecs'] = $request['trecs'];
+	}
+
+	$_SESSION = $pagingparams;
+
+	error_log('Session is ' . print_r($_SESSION, true));
 
 	return $pagingparams;
 }
+
+/**
+ * Get the paging bar
+ *
+ * @param unknown $url
+ * @param unknown $pagingparms
+ */
+function getPagingBar($paginglink, $pagingparms) {
+	//we keep eveything the same and change the page no
+	$pagingbar = '';
+
+	if ($pagingparms['trecs'] > $pagingparms['norecs']) {
+		// how many pages do we need???
+		$requiredpages = ceil($pagingparms['trecs']/$pagingparms['norecs']);
+
+		for ($i = 1; $i <= $requiredpages; $i++) {
+			//update link
+			$pagelink = $paginglink . '?page=' . $i;
+			$pagingbar .= "<a href='$pagelink'>$i</a> | \n";
+		}
+	}
+
+	return $pagingbar;
+}
+
 
 function getEmptyRecord($today = null) {
 	return array(
@@ -207,6 +257,26 @@ function RedirectTo($url, $permanent = false){
 		header('Location: ' . $url, true, ($permanent === true) ? 301 : 302);
 	//}
 	die('You are being redirected');			// need to die to ensure no further processing
+}
+
+function journalRecordExists($sourcetype, $sourceid) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+
+	$exists = false;
+	if ($sourceid) {			// if there is no source id - we cannot check
+		if ($db->getJournalBySourceId($sourcetype, $sourceid)) {
+			$exists = true;
+		}
+	}
+
+	return $exists;
+}
+
+function saveCalendarRecord($record) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	return $db->saveJournalEntry($record);
 }
 
 function ProcessPostData($params) {
