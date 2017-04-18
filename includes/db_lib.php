@@ -38,6 +38,17 @@ class dbfunctions {
 		return($this->mysqli->query($sql));
 	}
 
+	public function getAllEntryYears() {
+		$years = array();
+		$sql = "SELECT DISTINCT(YEAR(startdate)) AS theyear FROM journal";
+		if ($results = $this->mysqli->query($sql)) {
+			while ($result = $results->fetch_assoc()) {
+				$years[] = $result['theyear'];
+			}
+		}
+		return $years;
+	}
+
 	/*
 	  recid int(10) unsigned NOT NULL AUTO_INCREMENT,
 	  startdate date NOT NULL,
@@ -136,7 +147,17 @@ class dbfunctions {
 		$sql = 'SELECT * FROM journal ' . $this->_getEntriesSubSQL($pagingparams);
 
 		// ordering
-		$sql .= ' ORDER BY ' . $pagingparams['oby'] . ' ' . $pagingparams['dir'];
+		$ordersql = '';
+		$orderbys = explode(',', $pagingparams['oby']);
+		if (count($orderbys)) {
+			foreach ($orderbys as $orderby) {
+				if ($ordersql) {
+					$ordersql .= ', ';
+				}
+				$ordersql .= $orderby . ' ' . $pagingparams['dir'];
+			}
+			$sql .= ' ORDER BY ' . $ordersql;
+		}
 
 		// paging
 		$limitstart = ($pagingparams['page'] - 1) * $pagingparams['norecs'];

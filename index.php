@@ -26,6 +26,7 @@ if (isset($_REQUEST['action']) && isset($_REQUEST['recid'])) {
 
 $today = new DateTime();
 $years = range($today->format("Y"), $config['startyear']);
+$years = getAllEntryYears();
 $months = range(1,12);
 
 $ishome = (empty($_REQUEST));			// if we coming to start again ????
@@ -132,14 +133,16 @@ $editlink = $newlink . '?recid=';
         <div class="col-md-12">
 			<table class="table table-condensed table-striped table-hover">
 				<thead>
- 					<th class="text-center">Id</th>
-					<th class="text-center">Dates</th>
-					<th class="text-center">Details</th>
-					<th class="text-center">Source</th>
-					<?php if (isset($pagingparams['includedeleted'])) :?>
-						<th class="text-center">Del?</th>
-					<?php endif; ?>
-					<th width="8%" class="text-center">Actions</th>
+					<tr>
+	 					<th class="text-center">Id</th>
+						<th class="text-center">Dates</th>
+						<th class="text-center">Details</th>
+						<th class="text-center">Source</th>
+						<?php if (isset($pagingparams['includedeleted'])) :?>
+							<th class="text-center">Del?</th>
+						<?php endif; ?>
+						<th width="8%" class="text-center">Actions</th>
+					</tr>
 				</thead>
 				<tbody>
 					<tr>
@@ -163,7 +166,7 @@ $editlink = $newlink . '?recid=';
 					<tr>
 						<td><?php echo $entry['recid']; ?></td>
 						<td><?php echo $entry['date']; ?></td>
-						<td><?php echo $entry['details']; ?></td>
+						<td><?php echo str_replace("\n", '<br />', $entry['details']); ?></td>
 						<td><?php echo $entry['source']; ?></td>
 						<?php if (isset($pagingparams['includedeleted'])) :?>
 							<td><?php echo $entry['deleted']; ?></td>

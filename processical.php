@@ -3,12 +3,11 @@
 require_once('includes/lib.php');
 require('includes/iCalendarParser.php');
 
-$errormsg = '';
-$successmsg = '';
-
-
 //$ical   = new iCalendar('datatest/MyCal.ics');
 $ical   = new iCalendar('datatest/benjamin.c.ellis@googlemail.com_benjamin.c.ellis@gmail.com.ics');
+//$ical   = new iCalendar('datatest/mukudu Timesheet_423ml0252v128uhf2q02shlnuo@group.calendar.google.com.ics');
+//$ical   = new iCalendar('datatest/Jen Shifts_eonnmicrkd2uvko2e1g8l9qqug@group.calendar.google.com.ics');
+
 //$events = array_slice($ical->events(), 0, 20);
 $events = $ical->events();
 
@@ -52,8 +51,10 @@ $noofevents = $ical->event_count;
 							$record['details'] = $event['SUMMARY'];
 							$record['details'] .=  $event['DESCRIPTION'] ? ' ' .  $event['DESCRIPTION'] : '';
 							$record['details'] .=  $event['LOCATION'] ? ' at ' .  $event['LOCATION'] : '';
-							// for some reason the Google iCal escapes &amp; as &amp\;
-							$record['details'] = str_replace('&amp\;', '&amp;', $record['details']);
+							// for some reason the Google iCal escapes &amp; as &amp\; - changed
+							$record['details'] = str_replace('\;', ';', $record['details']);
+							// it also escapes , with \,
+							$record['details'] = str_replace('\,', ',', $record['details']);
 
 							$record['startdate'] = $ical->extractDateForMySQL($event['DTSTART']);
 							$record['starttime'] = $ical->extractTimeForMySQL($event['DTSTART']);

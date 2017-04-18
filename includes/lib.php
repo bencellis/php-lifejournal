@@ -67,7 +67,11 @@ function getJournalEntries($pagingparams) {
 					$journalentry['date'] = $phpdate->format('l j M, Y');
 				}else {
 					$phptime = DateTime::createFromFormat('H:i:s', $rawrec['starttime']);
-					$journalentry['date'] = $phpdate->format('l j M, Y') . ' @ ' . $phptime->format('H:i');
+					if ($phptime->format('H:i') == '00:00') {
+						$journalentry['date'] = $phpdate->format('l j M, Y');
+					}else{
+						$journalentry['date'] = $phpdate->format('l j M, Y') . ' @ ' . $phptime->format('H:i');
+					}
 				}
 			}else{
 				$journalentry['date'] = 'Not Dated';
@@ -106,13 +110,13 @@ function getPagingParams($config) {
 		$request = array_merge($request, $_REQUEST);
 	}
 
-	error_log("This request is " . print_r($request, true));
+	//error_log("This request is " . print_r($request, true));
 
 	// defaults
 	$pagingparams['page'] = isset($request['page']) ? $request['page'] : 1;
 	$pagingparams['norecs'] = isset($request['norecs']) ? $request['norecs'] : $config['defaultnumrecords'];
-	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'DESC';		// descending default
-	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate';	// startdate default
+	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'ASC';		// descending default
+	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate,starttime';	// startdate default
 
 	// check for filtering stuff
 	if (isset($request['includedeleted'])) {
@@ -151,6 +155,7 @@ function getPagingParams($config) {
 			unset($pagingparams['filtermonth']);
 		}
 		unset($request['trecs']);		// recount the records
+		$pagingparams['page'] = 1; 			// leaving all the others as they are
 	}else if (isset($request['filterby'])) {
 		// this will be the 1st time we see a filter request
 		$pagingparams['page'] = 1; 			// leaving all the others as they are
@@ -168,7 +173,7 @@ function getPagingParams($config) {
 
 	$_SESSION = $pagingparams;
 
-	error_log('Session is ' . print_r($_SESSION, true));
+	//error_log('Session is ' . print_r($_SESSION, true));
 
 	return $pagingparams;
 }
@@ -276,8 +281,20 @@ function journalRecordExists($sourcetype, $sourceid) {
 function saveCalendarRecord($record) {
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
-	return $db->saveJournalEntry($record);
+
+	if (!$ret = $db->saveJournalEntry($record)) {
+		error_log($db->getLastError());
+	}
+
+	return $ret;
 }
+
+function getAllEntryYears() {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	return $db->getAllEntryYears();
+}
+
 
 function ProcessPostData($params) {
 	global $dbconfig;
