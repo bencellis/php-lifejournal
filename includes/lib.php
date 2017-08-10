@@ -398,16 +398,31 @@ function ProcessPostData($params) {
 						unset($dbparams['endtime']);
 					}
 				}
-			}
-
-			// now can we save the details?
-			if (!$errorstr) {
-				//die('<pre>' . print_r($dbparams, true) . '</pre>');
-				if (!$db->saveJournalEntry($dbparams)) {
-					$errorstr = 'Failed to save record: ' . $db->getLastError();
+			}else{
+				// ensure we update end record for existing records
+				if ($dbparams['recid']) {
+					$dbparams['enddate'] = 'null';
+					$dbparams['endtime'] = "00:00:00";
 				}
 			}
+		}else{
+			if ($dbparams['recid']) {
+				// we need to reset all the date and fields
+				$dbparams['startdate'] = 0;
+				$dbparams['starttime'] = "00:00:00";
+				$dbparams['enddate'] = 'null';
+				$dbparams['endtime'] = "00:00:00";
+			}
 		}
+
+		// now can we save the details?
+		if (!$errorstr && count($dbparams)) {
+			//die('<pre>' . print_r($dbparams, true) . '</pre>');
+			if (!$db->saveJournalEntry($dbparams)) {
+				$errorstr = 'Failed to save record: ' . $db->getLastError();
+			}
+		}
+
 	}
 
 	return $errorstr;

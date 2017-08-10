@@ -20,7 +20,6 @@ if (!empty($_POST)) {
 			$pagingstuff = getPagingParams($config);
 			$redirecturl .= '?paging=' . $pagingstuff['paging'];
 		}
-		error_log("Redirecting to '$redirecturl'");
 		RedirectTo($redirecturl);
 	}
 
@@ -29,8 +28,15 @@ if (!empty($_POST)) {
 		$record = getSubmittedRecord($_POST);
 	}else{
 		$successmessage = 'Record has been saved - click cancel to return to main screen.';
+		// want to remember last entered date
+		$lastdate = new DateTime();
+		if ($lastyear = $_POST['startYear']) {
+			$lastmonth = empty($_POST['startMonth']) ? 1 : $_POST['startMonth'];
+			$lastday = empty($_POST['startMonth']) ? 1 : $_POST['startMonth'];
+			$lastdate->setDate($lastyear, $lastmonth, $lastday);
+		}
 		// get a new record
-		$record = getEmptyRecord($today);
+		$record = getEmptyRecord($lastdate);
 	}
 }else if (!empty($_GET['recid'])) {
 	//this is a get record and we have several options

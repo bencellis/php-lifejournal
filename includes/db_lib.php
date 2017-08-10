@@ -81,6 +81,8 @@ class dbfunctions {
 				if (empty($params['startdate'])) {
 					$params[$bf] = 0;		// cannot have an all field if undated
 				}// else the setting value stands
+				// TODO only one of these fields can be set
+
 			}else{
 				$params[$bf] = 0;
 			}
@@ -93,9 +95,12 @@ class dbfunctions {
 				}
 				// TODO we have to deal with date and time fields
 
-				$val = (is_numeric($val)) ? $val : "'" . $this->mysqli->real_escape_string($val) . "'";
-
-				$sqlfields .= "$fld = $val";
+				if ($val == 'null') {
+					$sqlfields .= "$fld = null";
+				}else{
+					$val = (is_numeric($val)) ? $val : "'" . $this->mysqli->real_escape_string($val) . "'";
+					$sqlfields .= "$fld = $val";
+				}
 			}else{
 				$recid = $val;
 			}

@@ -24,12 +24,12 @@ if (isset($_REQUEST['action']) && isset($_REQUEST['recid'])) {
 	}
 }
 
-$today = new DateTime();
-$years = range($today->format("Y"), $config['startyear']);
-$years = getAllEntryYears();
+//$today = new DateTime();
+//$years = range($today->format("Y"), $config['startyear']);
+$years = getAllEntryYears();			// for filter
 $months = range(1,12);
 
-$ishome = (empty($_REQUEST));			// if we coming to start again ????
+$ishome = (empty($_REQUEST));						// if we coming to start again ????
 $pagingparams = getPagingParams($config);			// this get paging, ordering and filtering data
 
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
@@ -193,7 +193,11 @@ $editlink = $newlink . '?recid=';
 	        <div class="col-md-12">
 				<div>
 					<hr />
-					<?php echo getPagingBar($paginglink, $pagingparams); ?>
+					<?php
+						if (count($journalentries)) {
+							echo getPagingBar($paginglink, $pagingparams);
+						}
+					?>
 					<hr />
 				</div>
 	        </div>
