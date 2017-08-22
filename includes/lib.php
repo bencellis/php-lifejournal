@@ -236,10 +236,25 @@ function getSubmittedRecord($params) {
 // 	$params['endHour'] = 0;
 // 	$params['endMinute'] = 0;
 
+
 	foreach($record as $fld => $val) {
-		if (isset($params[$fld])) {
+		//if (isset($params[$fld])) {
 			$record[$fld] = $params[$fld];
-		}
+		//}
+	}
+
+	if ($startdate = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
+		$record['startdate'] = $startdate;
+	}
+	if ($enddate = _makeSQLDate($params['endYear'], $params['endMonth'], $params['endDay'])) {
+		$record['enddate'] = $enddate;
+	}
+
+	if ($starttime = _makeSQLtime($params['startHour'], $params['startMinute'])) {
+		$record['starttime'] = $starttime;
+	}
+	if ($endtime = _makeSQLtime($params['endHour'], $params['endMinute'])){
+		$record['endtime'] = $endtime;
 	}
 
 	return $record;
@@ -303,129 +318,149 @@ function ProcessPostData($params) {
 
 	//echo '<pre>' . print_r($params, true) . '</pre>';
 
-	// deal with a delete first - all we need is recid
-	if (isset($params['deleterecord'])) {
-		if (empty($params['recid'])) { // should not happen
-			$errorstr = 'Record Id Needs to be specified';
-		}else{
-			// delete the record
-			if (!$db->deleteJournalEntry($params['recid'])){
-				$errorstr = 'Failed to delete record';
-			}
-		}
-	}else if (isset($params['saverecord'])){
-		//die('<pre>' . print_r($params, true) . '</pre>');
-
-		// none massaged data
-		$dbparams = array(
-			'details' => $params['details'],
-			'sourcetype' => empty($params['sourcetype']) ? 'Manual' : $params['sourcetype'],
-		);
-
-		//only specify if we have it - determines INSERT or UPDATE
-		if ($params['recid']) {
-			$dbparams['recid'] = $params['recid'];
-		}
-
-		// start year
-		$setenddate = true;			// will we need an end date and time
-		if ($params['startYear'] > 0) {
-			if (!empty($params['allYear'])) {
-				$dbparams['allyear'] = 1;
-				$setenddate  = false;
-
-				// reset the following fields
-				$params['startMonth'] = 1;
-				$params['startDay'] = 1;
-				$params['startHour'] = 0;
-				$params['startMinute'] = 0;
-				if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])){
-					$errorstr = 'Start Date is invalid';
-				}
-			}else if (!empty($params['allMonth'])) {
-				$dbparams['allmonth'] = 1;
-				$setenddate  = false;
-
-				// reset the following fields
-				$params['startDay'] = 1;
-				$params['startHour'] = 0;
-				$params['startMinute'] = 0;
-				if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])){
-					$errorstr = 'Start Date is invalid';
-				}
-			}else if (!empty($params['allDay'])) {
-				$dbparams['allday'] = 1;
-				$setenddate  = false;
-
-				// reset the following fields
-				$params['startHour'] = 0;
-				$params['startMinute'] = 0;
-				if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
-					$errorstr = 'Start Date is invalid';
-				}
+	if (!empty($params['details']))	{			// no empty records
+		// deal with a delete first - all we need is recid
+		if (isset($params['deleterecord'])) {
+			if (empty($params['recid'])) { // should not happen
+				$errorstr = 'Record Id Needs to be specified';
 			}else{
-				// set up the dates and times
-				if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
-					$errorstr = 'Start Date is invalid';
-				}
-				if (!$dbparams['starttime'] = _makeSQLTime($params['startHour'], $params['startMinute'])){
-					$errorstr = 'Start Time is invalid';
+				// delete the record
+				if (!$db->deleteJournalEntry($params['recid'])){
+					$errorstr = 'Failed to delete record';
 				}
 			}
+		}else if (isset($params['saverecord'])){
+			//die('<pre>' . print_r($params, true) . '</pre>');
 
-			// end date stuff
-			if (!empty($params['isevent'])) {
-				$dbparams['isevent'] = 1;
-				$setenddate = false;
+			// none massaged data
+			$dbparams = array(
+				'details' => $params['details'],
+				'sourcetype' => empty($params['sourcetype']) ? 'Manual' : $params['sourcetype'],
+			);
+
+			//only specify if we have it - determines INSERT or UPDATE
+			if ($params['recid']) {
+				$dbparams['recid'] = $params['recid'];
 			}
 
-			if ($setenddate) {
-				if (!$dbparams['enddate'] = _makeSQLDate($params['endYear'], $params['endMonth'], $params['endDay'])) {
-					$errorstr = 'End Date is invalid';
+			// start year
+			$setenddate = true;			// will we need an end date and time
+			if ($params['startYear'] > 0) {
+				if (!empty($params['allYear'])) {
+					$dbparams['allyear'] = 1;
+					$setenddate  = false;
+
+					// reset the following fields
+					$params['startMonth'] = 1;
+					$params['startDay'] = 1;
+					$params['startHour'] = 0;
+					$params['startMinute'] = 0;
+					if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])){
+						$errorstr = 'Start Date is invalid';
+					}
+				}else if (!empty($params['allMonth'])) {
+					$dbparams['allmonth'] = 1;
+					$setenddate  = false;
+
+					// reset the following fields
+					$params['startDay'] = 1;
+					$params['startHour'] = 0;
+					$params['startMinute'] = 0;
+					if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])){
+						$errorstr = 'Start Date is invalid';
+					}
+				}else if (!empty($params['allDay'])) {
+					$dbparams['allday'] = 1;
+					$setenddate  = false;
+
+					// reset the following fields
+					$params['startHour'] = 0;
+					$params['startMinute'] = 0;
+					if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
+						$errorstr = 'Start Date is invalid';
+					}
+				}else{
+					// set up the dates and times
+					if (!$dbparams['startdate'] = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
+						$errorstr = 'Start Date is invalid';
+					}
+					if (!$dbparams['starttime'] = _makeSQLTime($params['startHour'], $params['startMinute'])){
+						$errorstr = 'Start Time is invalid';
+					}
 				}
-				if (!$dbparams['endtime'] = _makeSQLTime($params['endHour'], $params['endMinute'])){
-					$errorstr = 'End Time is invalid';
+
+				// end date stuff
+				if (!empty($params['isevent'])) {
+					$dbparams['isevent'] = 1;
+					$setenddate = false;
 				}
-				if (!$errorstr) {
-					// check if we have the same day and time
-					if (($dbparams['startdate'] == $dbparams['enddate']) && ($dbparams['starttime'] == $dbparams['endtime'])) {
-						if ($dbparams['starttime'] == "00:00:00") {		// only if no time has been set
-							$dbparams['allday'] = 1;
-						}else{
-							$dbparams['isevent'] = 1;
+
+				if ($setenddate) {
+					if (!$dbparams['enddate'] = _makeSQLDate($params['endYear'], $params['endMonth'], $params['endDay'])) {
+						$errorstr = 'End Date is invalid';
+					}
+					if (!$dbparams['endtime'] = _makeSQLTime($params['endHour'], $params['endMinute'])){
+						$errorstr = 'End Time is invalid';
+					}
+					if (!$errorstr) {
+						// check if we have the same day and time
+						if (($dbparams['startdate'] == $dbparams['enddate']) && ($dbparams['starttime'] == $dbparams['endtime'])) {
+							if ($dbparams['starttime'] == "00:00:00") {		// only if no time has been set
+								$dbparams['allday'] = 1;
+							}else{
+								$dbparams['isevent'] = 1;
+							}
+							unset($dbparams['enddate']);
+							unset($dbparams['endtime']);
 						}
-						unset($dbparams['enddate']);
-						unset($dbparams['endtime']);
+					}
+				}else{
+					// ensure we update end record for existing records
+					if ($dbparams['recid']) {
+						$dbparams['enddate'] = 'null';
+						$dbparams['endtime'] = "00:00:00";
 					}
 				}
 			}else{
-				// ensure we update end record for existing records
 				if ($dbparams['recid']) {
+					// we need to reset all the date and fields
+					$dbparams['startdate'] = 0;
+					$dbparams['starttime'] = "00:00:00";
 					$dbparams['enddate'] = 'null';
 					$dbparams['endtime'] = "00:00:00";
 				}
 			}
-		}else{
-			if ($dbparams['recid']) {
-				// we need to reset all the date and fields
-				$dbparams['startdate'] = 0;
-				$dbparams['starttime'] = "00:00:00";
-				$dbparams['enddate'] = 'null';
-				$dbparams['endtime'] = "00:00:00";
+
+			// before we do this - lets make sure enddate < startdate
+			if (isset($dbparams['enddate']) && ($dbparams['enddate'] != 'null') && (!_checkDateTimes($dbparams['startdate'], $dbparams['starttime'], $dbparams['enddate'], $dbparams['endtime']))) {
+				$errorstr = 'End Date cannot be earlier than Start Date';
+			}
+
+			// now can we save the details?
+			if (!$errorstr && count($dbparams)) {
+				//die('<pre>' . print_r($dbparams, true) . '</pre>');
+				if (!$db->saveJournalEntry($dbparams)) {
+					$errorstr = 'Failed to save record: ' . $db->getLastError();
+				}
 			}
 		}
-
-		// now can we save the details?
-		if (!$errorstr && count($dbparams)) {
-			//die('<pre>' . print_r($dbparams, true) . '</pre>');
-			if (!$db->saveJournalEntry($dbparams)) {
-				$errorstr = 'Failed to save record: ' . $db->getLastError();
-			}
-		}
-
+	}else{
+		$errorstr = 'No entry details have been entered';
 	}
 
 	return $errorstr;
+}
+
+function _checkDateTimes($startdate, $starttime, $enddate, $endtime) {
+	$noerror = false;
+	if ($start = DateTime::createFromFormat("Y/m/d H:i:s", "$startdate $starttime")) {
+		if ($end = DateTime::createFromFormat("Y/m/d H:i:s", "$enddate $endtime")) {
+			if ($start->getTimestamp() <= $end->getTimestamp()) {		// compare them
+				$noerror = true;
+			}
+		}
+	}
+	return $noerror;
 }
 
 function _makeSQLDate($year, $month, $day) {

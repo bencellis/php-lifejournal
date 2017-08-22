@@ -24,7 +24,7 @@ if (!empty($_POST)) {
 	}
 
 	if ($errormessage = ProcessPostData($_POST)) {
-		//TODO restore the values submitted for correction
+		//Restore the values submitted for correction
 		$record = getSubmittedRecord($_POST);
 	}else{
 		$successmessage = 'Record has been saved - click cancel to return to main screen.';
@@ -32,7 +32,7 @@ if (!empty($_POST)) {
 		$lastdate = new DateTime();
 		if ($lastyear = $_POST['startYear']) {
 			$lastmonth = empty($_POST['startMonth']) ? 1 : $_POST['startMonth'];
-			$lastday = empty($_POST['startMonth']) ? 1 : $_POST['startMonth'];
+			$lastday = empty($_POST['startDay']) ? 1 : $_POST['startDay'];
 			$lastdate->setDate($lastyear, $lastmonth, $lastday);
 		}
 		// get a new record
