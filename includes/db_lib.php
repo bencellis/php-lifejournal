@@ -134,16 +134,56 @@ class dbfunctions {
 
 	private function _getEntriesSubSQL($pagingparams) {
 		$sql = '';
+		//return $sql;
+
 		// do filtering
 		if (!isset($pagingparams['includedeleted'])) {
 			$sql .= ($sql ? ' AND ' : ' WHERE ') . 'deleted = 0';
 		}
 
 		if (isset($pagingparams['filteryear'])) {
-			$sql .= ($sql ? ' AND ' : ' WHERE ') . 'YEAR(startdate) = ' . $pagingparams['filteryear'];
+			// dates in this year and month
+			$sql .= ($sql ? ' AND ' : ' WHERE ');
+			$sql .= '(';
+			$sql .= 'YEAR(startdate) = ' . $pagingparams['filteryear'];
 			if (isset($pagingparams['filtermonth'])) {
 				$sql .= ' AND MONTH(startdate) = ' . $pagingparams['filtermonth'];
 			}
+			$sql .= ") OR ( ";
+
+			// add a year long filter to the mix if we are filtering by month
+			if (isset($pagingparams['filtermonth'])) {
+				$sql .= 'YEAR(startdate) = ' . $pagingparams['filteryear'];
+				$sql .= ' AND allyear = 1';
+				$sql .= ") OR ( ";
+			}
+
+			// add a range to the mix - tricky job
+			$startdate = 0;
+			$endate = 0;
+			if (!isset($pagingparams['filtermonth'])) {
+				// then this is the whole year how wonderful
+				$startdate = $pagingparams['filteryear'] . '/01/01';
+				$endate = $pagingparams['filteryear'] . '/12/31';
+			}else{
+				// start date is always easy
+				$startdate = $pagingparams['filteryear'] . '/' . $pagingparams['filtermonth'] . '/01';
+				$possibles = array(31,30,28,29);
+				foreach ($possibles as $endday) {
+					if (checkdate((int) $pagingparams['filtermonth'], $endday, (int) $pagingparams['filteryear'])) {
+						break;
+					}
+				}
+				$endate = $pagingparams['filteryear'] . '/' . sprintf("%02d", $pagingparams['filtermonth']) . '/' . sprintf("%02d", $endday);
+			}
+
+			$sql .= "
+					startdate <= STR_TO_DATE('$startdate','%Y/%m/%d')
+				AND
+					enddate >= STR_TO_DATE('$endate','%Y/%m/%d')
+				";
+
+			$sql .= ')';
 		}
 		return $sql;
 	}
@@ -171,7 +211,7 @@ class dbfunctions {
 		$limitto = $pagingparams['page'] * $pagingparams['norecs'];
 		$sql .= " LIMIT $limitstart, $limitto";
 
-		//error_log($sql);
+		//die($sql);
 
 		if ($results = $this->mysqli->query($sql)) {
 			while ($result = $results->fetch_assoc()) {

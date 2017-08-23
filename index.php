@@ -32,6 +32,8 @@ $months = range(1,12);
 $ishome = (empty($_REQUEST));						// if we coming to start again ????
 $pagingparams = getPagingParams($config);			// this get paging, ordering and filtering data
 
+$isfiltered = !empty($pagingparams['filteryear']);
+
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
 
 $journalentries = getJournalEntries($pagingparams);
@@ -47,6 +49,8 @@ $connectlink = $baselink . 'connectwith' . '&recid=';
 
 $newlink = 'editEntry.php';
 $editlink = $newlink . '?recid=';
+
+$undated = 'Undated';
 
 //die('<pre>' . print_r($journalentries, true) . '</pre>');
 
@@ -103,16 +107,18 @@ $editlink = $newlink . '?recid=';
 								<option value="all">All</option>
 								<?php
 									$selectedyear = isset($pagingparams['filteryear']) ? $pagingparams['filteryear'] : '';
-									echo "<option " . (($selectedyear === 0) ? 'selected' : '') . " value='0'>Undated</option>\n";
+									echo "<option " . (($selectedyear === 0) ? 'selected' : '') . " value='0'>$undated</option>\n";
 									foreach ($years as $year) {
-										echo "<option " . (($selectedyear == $year) ? 'selected' : '') . " value='$year'>$year</option>\n";
+										if ($year) {			// miss zero
+											echo "<option " . (($selectedyear == $year) ? 'selected' : '') . " value='$year'>$year</option>\n";
+										}
 									}
 								?>
 							</select>
 						</div>
 						<div class="form-group col-md-3">
 							<label for="id_filtermonth">And Month</label>
-							<select name="filtermonth" class="form-control" id="id_filtermonth" <?php echo (isset($pagingparams['filtermonth'])) ? '': 'disabled' ?>>
+							<select name="filtermonth" class="form-control" id="id_filtermonth" <?php echo (isset($pagingparams['filteryear'])) ? '': 'disabled' ?>>
 								<option value="all">All</option>
 								<?php
 									$selectedmonth = isset($pagingparams['filtermonth']) ? $pagingparams['filtermonth'] : '';
@@ -151,17 +157,31 @@ $editlink = $newlink . '?recid=';
 						</td>
 					</tr>
 				<?php foreach ($journalentries as $entry): ?>
+
 					<?php
-						$entrydate = DateTime::createFromFormat('Y-m-d', $entry['realdate']);
+						if ($entry['realdate'] == "0000-00-00") {
+							$entry['date'] = $undated;
+						}else{
+							$entrydate = DateTime::createFromFormat('Y-m-d', $entry['realdate']);
+						}
 						$recid = $entry['recid'];
 					?>
-					<?php if ($lastdisplayr != $entrydate->format('Y')): ?>
-						<tr>
-							<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
-								<?php $lastdisplayr = $entrydate->format('Y'); ?>
-								<strong><?php echo $lastdisplayr; ?></strong>
-							</td>
-						</tr>
+					<?php if (!$isfiltered): ?>
+						<?php if ($entry['date'] != $undated && $lastdisplayr != $entrydate->format('Y')): ?>
+							<tr>
+								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
+									<?php $lastdisplayr = $entrydate->format('Y'); ?>
+									<strong><?php echo $lastdisplayr; ?></strong>
+								</td>
+							</tr>
+						<?php elseif ($entry['date'] == $undated && ($lastdisplayr != $undated)): ?>
+							<tr>
+								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
+									<?php $lastdisplayr = $undated; ?>
+									<strong><?php echo $lastdisplayr; ?></strong>
+								</td>
+							</tr>
+						<?php endif; ?>
 					<?php endif; ?>
 					<tr>
 						<td><?php echo $entry['recid']; ?></td>
