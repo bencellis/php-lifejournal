@@ -242,11 +242,11 @@ function getSubmittedRecord($params) {
 			$record[$fld] = $params[$fld];
 		//}
 	}
-
-	if ($startdate = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'])) {
+	$separator = '-';
+	if ($startdate = _makeSQLDate($params['startYear'], $params['startMonth'], $params['startDay'], $separator)) {
 		$record['startdate'] = $startdate;
 	}
-	if ($enddate = _makeSQLDate($params['endYear'], $params['endMonth'], $params['endDay'])) {
+	if ($enddate = _makeSQLDate($params['endYear'], $params['endMonth'], $params['endDay'], $separator)) {
 		$record['enddate'] = $enddate;
 	}
 
@@ -463,20 +463,20 @@ function _checkDateTimes($startdate, $starttime, $enddate, $endtime) {
 	return $noerror;
 }
 
-function _makeSQLDate($year, $month, $day) {
+function _makeSQLDate($year, $month, $day, $separator = '/') {
 	$datestr = '';
 	//bool checkdate ( int $month , int $day , int $year )
 	if (checkdate($month, $day, $year)) {
-		$datestr = $year . '/'. sprintf("%02d", $month) . '/' . sprintf("%02d", $day);
+		$datestr = $year . $separator . sprintf("%02d", $month) . $separator . sprintf("%02d", $day);
 	}
 	return $datestr;
 }
 
-function _makeSQLTime($hour, $minutes) {
+function _makeSQLTime($hour, $minutes, $separator = ':') {
 	$timestr = '';
 
 	if (($hour >= 0 && $hour <= 23) && ($minutes >= 0 && $minutes <= 59)) {
-		$timestr = sprintf("%02d", $hour) . ':' . sprintf("%02d", $minutes) . ':00';
+		$timestr = sprintf("%02d", $hour) . $separator . sprintf("%02d", $minutes) . $separator . '00';
 	}
 
 	return $timestr;
