@@ -32,7 +32,7 @@ $dbconfig = array(
 
 // application configuration
 $config = array(
-	'startyear' => 1965,
-	'defaultnumrecords' => 25,
+	'startyear' => 1964,
+	'defaultnumrecords' => 50,
 	'detaillength' => 120,
 );

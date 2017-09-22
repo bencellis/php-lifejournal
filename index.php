@@ -4,6 +4,7 @@ require_once('includes/lib.php');
 
 $errormsg = '';
 $successmsg = '';
+$searchterm = '';
 
 if (isset($_REQUEST['action']) && isset($_REQUEST['recid'])) {
 	switch ($_REQUEST['action']) {
@@ -32,7 +33,10 @@ $months = range(1,12);
 $ishome = (empty($_REQUEST));						// if we coming to start again ????
 $pagingparams = getPagingParams($config);			// this get paging, ordering and filtering data
 
+//die(print_r($pagingparams, true));
+
 $isfiltered = !empty($pagingparams['filteryear']);
+$issearching = !empty($pagingparams['searchterm']);
 
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
 
@@ -87,6 +91,20 @@ $undated = 'Undated';
 	        </div>
 	      </div>
  	  <?php endif?>
+ 	  <!-- search box -->
+		<div class="row">
+			<div class="col-md-12">
+				<div class="well well-lg text-right">
+					<form method="POST" action="<?php echo $paginglink; ?>" name="searchForm" id="id_searchForm" class="form-inline">
+						<div class="form-group">
+							<label for="id_searchterm">Search:</label>
+							<input type="text" name="searchterm" class="form-control" id="id_searchterm" placeholder="Search..." value="<?php echo $pagingparams['searchterm']; ?>"/>
+						</div>
+							<button type="submit" name="dosearch" class="btn btn-default">Find</button>
+					</form>
+				</div>
+			</div>
+		</div>
       <!-- Filtering Row -->
 		<div class="row">
 			<div class="col-md-12">

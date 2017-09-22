@@ -110,10 +110,10 @@ function getPagingParams($config) {
 		$request = array_merge($request, $_REQUEST);
 	}
 
-	//error_log("This request is " . print_r($request, true));
+	//die("This request is " . print_r($request, true));
 
 	// defaults
-	$pagingparams['page'] = isset($request['page']) ? $request['page'] : 1;
+	$pagingparams['page'] = empty($request['page']) ? 1 : $request['page'];
 	$pagingparams['norecs'] = isset($request['norecs']) ? $request['norecs'] : $config['defaultnumrecords'];
 	$pagingparams['dir'] = isset($request['dir']) ? $request['dir'] : 'ASC';		// descending default
 	$pagingparams['oby'] = isset($request['oby']) ? $request['oby'] : 'startdate,starttime';	// startdate default
@@ -171,9 +171,14 @@ function getPagingParams($config) {
 		$pagingparams['trecs'] = $request['trecs'];
 	}
 
+	// are we also searching
+	if (!empty($_REQUEST['searchterm'])) {
+		$pagingparams['searchterm'] = $_REQUEST['searchterm'];
+	}
+
 	$_SESSION = $pagingparams;
 
-	//error_log('Session is ' . print_r($_SESSION, true));
+	//die('Session is ' . print_r($_SESSION, true));
 
 	return $pagingparams;
 }
@@ -187,21 +192,54 @@ function getPagingParams($config) {
 function getPagingBar($paginglink, $pagingparms) {
 	//we keep eveything the same and change the page no
 	$pagingbar = '';
-
 	if ($pagingparms['trecs'] > $pagingparms['norecs']) {
-		// how many pages do we need???
-		$requiredpages = ceil($pagingparms['trecs']/$pagingparms['norecs']);
-
-		for ($i = 1; $i <= $requiredpages; $i++) {
-			//update link
-			$pagelink = $paginglink . '?page=' . $i;
-			$pagingbar .= "<a href='$pagelink'>$i</a> | \n";
+		if (!$pagingparms['page']) {
+			$pagingparms['page'] = 1;
 		}
+		$pagingbar = handle_pagination($pagingparms['trecs'], $pagingparms['page'], $pagingparms['norecs'], $paginglink . '?page=');
 	}
 
 	return $pagingbar;
 }
+/**
+ * stolen code ammended to do the page numbers as expected
+ *
+ * @param unknown $total
+ * @param unknown $page
+ * @param unknown $shown
+ * @param unknown $url
+ */
+function handle_pagination($total, $page, $shown, $url) {
+	$pages = ceil( $total / $shown );
 
+	$range_start = ( ($page >= 5) ? ($page - 3) : 1 );
+	$range_end = ( (($page + 5) > $pages ) ? $pages : ($page + 5) );
+
+
+	$r[] = '<span><a href="'. $url .'1">&laquo; first</a></span>';
+	if ( $page > 1 ) {
+		$r[] = '<span><a href="'. $url . ( $page - 1 ) .'">&lsaquo; previous</a></span>';
+		$r[] = ( ($range_start > 1) ? ' ... ' : '' );
+	}
+
+	if ( $range_end > 1 ) {
+		foreach(range($range_start, $range_end) as $key => $value) {
+			if ($value == $page) {
+				$r[] = '<span>'. $value .'</span>';
+			} else {
+				$r[] = '<span><a href="'. $url . ($value) .'">'. $value .'</a></span>';
+			}
+		}
+	}
+
+	if ( ( $page + 1 ) < $pages ) {
+		$r[] = ( ($range_end < $pages) ? ' ... ' : '' );
+		$r[] = '<span><a href="'. $url . ( $page + 1 ) .'">next &rsaquo;</a></span>';
+		$r[] = '<span><a href="'. $url . ( $pages - 1 ) .'">last &raquo;</a></span>';
+	}
+
+	return ( (isset($r)) ? '<div>'. implode("\r\n", $r) .'</div>' : '');
+}
 
 function getEmptyRecord($today = null) {
 	return array(

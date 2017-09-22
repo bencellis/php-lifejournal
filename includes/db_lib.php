@@ -185,6 +185,12 @@ class dbfunctions {
 
 			$sql .= ')';
 		}
+
+		if (isset($pagingparams['searchterm'])) {
+			// dates in this year and month
+			$sql .= ($sql ? ' AND ' : ' WHERE ');
+			$sql .= "details LIKE '%" . $pagingparams['searchterm'] . "%'";
+		}
 		return $sql;
 	}
 
@@ -208,7 +214,8 @@ class dbfunctions {
 
 		// paging
 		$limitstart = ($pagingparams['page'] - 1) * $pagingparams['norecs'];
-		$limitto = $pagingparams['page'] * $pagingparams['norecs'];
+		//$limitto = $pagingparams['page'] * $pagingparams['norecs'];
+		$limitto = $pagingparams['norecs'];
 		$sql .= " LIMIT $limitstart, $limitto";
 
 		//die($sql);
