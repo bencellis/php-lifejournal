@@ -1,6 +1,15 @@
 <?php
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once('includes/lib.php');
+require_once('plugins/lib.php');
+
+$pluginmanager = new pluginmanager();
+$plugins = $pluginmanager->get_all_plugins();
+die('<pre>' . print_r($plugins, true) . '</pre>');
 
 $errormsg = '';
 $successmsg = '';
@@ -19,7 +28,7 @@ if (isset($_REQUEST['action']) && isset($_REQUEST['recid'])) {
 					$successmsg = 'Record has been successfully connected';
 				}
 			}else{
-				$errormsg = "A Connected Id must be specified";
+				$successmsg = 'Record has been successfully connected';
 			}
 			break;
 	}
@@ -100,7 +109,8 @@ $undated = 'Undated';
 							<label for="id_searchterm">Search:</label>
 							<input type="text" name="searchterm" class="form-control" id="id_searchterm" placeholder="Search..." value="<?php echo $pagingparams['searchterm']; ?>"/>
 						</div>
-							<button type="submit" name="dosearch" class="btn btn-default">Find</button>
+							<button type="submit" name="dosearch" class="btn btn-success">Find</button>&nbsp;
+							<button type="submit" name="clrsearch" class="btn btn-default">Clear Search</button>
 					</form>
 				</div>
 			</div>
@@ -165,7 +175,7 @@ $undated = 'Undated';
 						<?php if (isset($pagingparams['includedeleted'])) :?>
 							<th class="text-center">Del?</th>
 						<?php endif; ?>
-						<th width="8%" class="text-center">Actions</th>
+						<th width="12%" class="text-center">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -210,6 +220,9 @@ $undated = 'Undated';
 							<td><?php echo $entry['deleted']; ?></td>
 						<?php endif; ?>
 						<td style="vertical-align: middle" class="text-center">
+							<!-- <a href="#" id="id_viewrecord" class="editLink editEntry" title="View">
+								<span class="glyphicon glyphicon-eye-open"></span>
+							</a>&nbsp;-->
 							<a href="<?php echo $editlink . $recid; ?>" class="editLink editEntry" title="Edit">
 								<span class="glyphicon glyphicon-wrench"></span>
 							</a>&nbsp;

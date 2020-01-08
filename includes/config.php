@@ -26,7 +26,8 @@ $dbconfig = array(
 	'dbserver' => 'localhost',
 	'dbuser' => 'inhindsight',
 	'dbpasswd' => '1nh1nd5ight',
-	'dbname' => 'inhindsight',
+	//'dbname' => 'inhindsight',
+    'dbname' => 'inhindsight2',
 	'dbport' => 3306
 );
 

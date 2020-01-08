@@ -13,6 +13,19 @@ function markEntryAsDeleted($recid){
 	return $errmsg;
 }
 
+function unconnectJournalEntry($recid) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	$errmsg = '';
+
+	if (!$db->unconnectJournalEntry($recid)) {
+		$errmsg = 'Failed to connect records because ' . $db->getLastError();
+	}
+
+	return $errmsg;
+}
+
+
 function connectJournalEntries($mainid, $connectedid) {
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
@@ -55,44 +68,57 @@ function getJournalEntries($pagingparams) {
 				$journalentry['details'] = $rawrec['details'];
 			}
 
-
 			// date stuff
-			if ($rawrec['startdate']) {
-				$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['startdate']);
-				if ($rawrec['allyear']) {
-					$journalentry['date'] = $phpdate->format('Y');
-				}else if ($rawrec['allmonth']) {
-					$journalentry['date'] = $phpdate->format('F, Y');
-				}else if ($rawrec['allday']) {
-					$journalentry['date'] = $phpdate->format('l j M, Y');
-				}else {
-					$phptime = DateTime::createFromFormat('H:i:s', $rawrec['starttime']);
-					if ($phptime->format('H:i') == '00:00') {
-						$journalentry['date'] = $phpdate->format('l j M, Y');
-					}else{
-						$journalentry['date'] = $phpdate->format('l j M, Y') . ' @ ' . $phptime->format('H:i');
-					}
-				}
-			}else{
-				$journalentry['date'] = 'Not Dated';
-			}
+			$journalentry['date'] = getDisplayDate($rawrec);
 
-			// only if available
-			if ($rawrec['enddate']) {
-				$journalentry['date'] .=  '<br />To ';
-				$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['enddate']);
-				$journalentry['date'] .= $phpdate->format('l j M, Y');
-				if ($rawrec['endtime'] !== '00:00:00') {
-					$phptime = DateTime::createFromFormat('H:i:s', $rawrec['endtime']);
-					$journalentry['date'] .= ' @ ' . $phptime->format('H:i');
-				}
-			}
 			$journalentries[] = $journalentry;
 		}
 	}
 
 	return $journalentries;
 
+}
+
+/**
+ * untidy as this was copied from elewhere
+ *
+ * @param unknown $rawrec
+ * @return mixed
+ */
+function getDisplayDate($rawrec) {
+	$journalentry = array();
+
+	if ($rawrec['startdate'] && $rawrec['startdate'] != '0000-00-00') {
+		$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['startdate']);
+		if ($rawrec['allyear']) {
+			$journalentry['date'] = $phpdate->format('Y');
+		}else if ($rawrec['allmonth']) {
+			$journalentry['date'] = $phpdate->format('F, Y');
+		}else if ($rawrec['allday']) {
+			$journalentry['date'] = $phpdate->format('l j M, Y');
+		}else {
+			$phptime = DateTime::createFromFormat('H:i:s', $rawrec['starttime']);
+			if ($phptime->format('H:i') == '00:00') {
+				$journalentry['date'] = $phpdate->format('l j M, Y');
+			}else{
+				$journalentry['date'] = $phpdate->format('l j M, Y') . ' @ ' . $phptime->format('H:i');
+			}
+		}
+		// only if available
+		if ($rawrec['enddate']) {
+			$journalentry['date'] .=  '<br />To ';
+			$phpdate = DateTime::createFromFormat('Y-m-d', $rawrec['enddate']);
+			$journalentry['date'] .= $phpdate->format('l j M, Y');
+			if ($rawrec['endtime'] !== '00:00:00') {
+				$phptime = DateTime::createFromFormat('H:i:s', $rawrec['endtime']);
+				$journalentry['date'] .= ' @ ' . $phptime->format('H:i');
+			}
+		}
+	}else{
+		$journalentry['date'] = 'Undated';
+	}
+
+	return $journalentry['date'];
 }
 
 /**
@@ -104,6 +130,7 @@ function getPagingParams($config) {
 
 	session_start();			// start session
 	$request = $_SESSION;			// first get the session values if any
+	//die('Session is ' . print_r($_SESSION, true));
 
 	// then we overwrite any of the values with any in the REQUEST object
 	if (!empty($_REQUEST)) {
@@ -154,12 +181,21 @@ function getPagingParams($config) {
 		if (isset($pagingparams['filtermonth'])) {
 			unset($pagingparams['filtermonth']);
 		}
-		unset($request['trecs']);		// recount the records
-		$pagingparams['page'] = 1; 			// leaving all the others as they are
-	}else if (isset($request['filterby'])) {
-		// this will be the 1st time we see a filter request
-		$pagingparams['page'] = 1; 			// leaving all the others as they are
-		unset($request['trecs']);		// recount the records
+// 		unset($request['trecs']);		// recount the records
+// 		$pagingparams['page'] = 1; 			// leaving all the others as they are
+	}
+
+	// on any submitted form - reset the page and record numbers
+	if ( isset($_POST['dosearch']) || isset($_POST['clearfilter']) || isset($_POST['filterby']) || isset($_POST['clrsearch']) ) {
+		$pagingparams['page'] = 1;
+		if (isset($request['trecs'])) {
+			unset($request['trecs']);
+		}
+	}
+
+	// are we also searching
+	if (!isset($_POST['clrsearch']) && isset($request['searchterm'])) {
+		$pagingparams['searchterm'] = $request['searchterm'];
 	}
 
 	// lets get the total count
@@ -169,11 +205,6 @@ function getPagingParams($config) {
 		$pagingparams['trecs'] = $db->getJournalEntriesCount($pagingparams);		// startdate default
 	}else{
 		$pagingparams['trecs'] = $request['trecs'];
-	}
-
-	// are we also searching
-	if (!empty($_REQUEST['searchterm'])) {
-		$pagingparams['searchterm'] = $_REQUEST['searchterm'];
 	}
 
 	$_SESSION = $pagingparams;
@@ -302,6 +333,12 @@ function getJounalEntry($recid) {
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
 	return $db->getJournalEntry($recid);
+}
+
+function getJounalEntryWithConnections($recid) {
+	global $dbconfig;
+	$db = new dbfunctions($dbconfig);
+	return $db->getJounalEntryWithConnections($recid);
 }
 
 /**

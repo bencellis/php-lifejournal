@@ -9,8 +9,12 @@ $hours = range(0,23);
 $minutes = range(0,59);
 $errormessage = '';
 $successmessage = '';
-
 $record = array();
+$connectedentries = array();
+
+$paginglink = 'editEntry.php';
+$editlink = $paginglink . '?recid=';
+$unconnectlink = $paginglink . '?action=disconnect&recid=';
 
 if (!empty($_POST)) {
 	if (isset($_POST['canceledit'])) {
@@ -38,17 +42,37 @@ if (!empty($_POST)) {
 		// get a new record
 		$record = getEmptyRecord($lastdate);
 	}
+}elseif (isset($_REQUEST['action']) && isset($_REQUEST['disconnectid'])) {
+	if (!$errormsg = unconnectJournalEntry($_REQUEST['disconnectid'])) {
+		//$successmsg = 'Record has been successfully unconnected';
+		RedirectTo($editlink . $_REQUEST['recid'] . '&disconnect=1');	// so we don't do it agian
+		die;
+	}
 }else if (!empty($_GET['recid'])) {
 	//this is a get record and we have several options
-	if (!$record = getJounalEntry($_GET['recid'])) {
-		$errormessage = 'Record Not found';
-		$record = getEmptyRecord($today);
+	if ($records = getJounalEntryWithConnections($_GET['recid'])) {
+		foreach ($records as $rec) {
+			if ($rec['recid'] == $_GET['recid']) {
+				$record = $rec;
+			}else{
+				$connectedentries[] = $rec;
+			}
+		}
+		if (!$record) {
+			$errormessage = 'Record Not found';
+			$record = getEmptyRecord($today);
+			$connectedentries = array();
+		}
 	}
 }else{
 	// we are dealing with an new record
 	$record = getEmptyRecord($today);
 }
 
+// success message
+if (isset($_GET['disconnect'])) {
+	$successmessage = 'Record has been successfully unconnected';
+}
 
 // we need to ensure we have date objects to work with
 $startdate = null;
@@ -198,7 +222,7 @@ if ($record['endtime']) {
 						</select>
 					</div>
 				</div>
-				<!--  end dates -->
+				<!-- end dates -->
 				<div class="row">
 					<div class="col-md-1">
 						<strong>End Date</strong>
@@ -291,6 +315,49 @@ if ($record['endtime']) {
 	     </div>
       </div>
     </div> <!-- /container -->
+	<?php if (count($connectedentries)) : ?>
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="col-md-12">
+        	<h3>Connected Records</h3>
+        </div>
+        <div class="col-md-12">
+			<table class="table table-condensed table-striped table-hover">
+				<thead>
+					<tr>
+	 					<th class="text-center">Id</th>
+						<th class="text-center">Dates</th>
+						<th class="text-center">Details</th>
+						<th class="text-center">Source</th>
+						<th width="12%" class="text-center">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ($connectedentries as $entry): ?>
+					<tr>
+						<td><?php echo $entry['recid']; ?></td>
+						<td><?php echo getDisplayDate($entry); ?></td>
+						<td><?php echo str_replace("\n", '<br />', $entry['details']); ?></td>
+						<td><?php echo $entry['sourcetype']; ?></td>
+						<td style="vertical-align: middle" class="text-center">
+							<!-- <a href="#" id="id_viewrecord" class="editLink editEntry" title="View">
+								<span class="glyphicon glyphicon-eye-open"></span>
+							</a> &nbsp;-->
+							<a href="<?php echo $editlink . $entry['recid']; ?>" class="editLink editEntry" title="Edit">
+								<span class="glyphicon glyphicon-wrench"></span>
+							</a> &nbsp;
+							<a href="<?php echo $unconnectlink . $record['recid'] . '&disconnectid='. $entry['recid']; ?>" class="editLink unlinkEntry" title="Unconnect">
+								<span class="glyphicon glyphicon-minus-sign"></span>
+							</a>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+      </div>
+    </div> <!-- /container -->
+    <?php endif;?>
     <hr>
 
 <?php include_once('includes/footer.php'); ?>

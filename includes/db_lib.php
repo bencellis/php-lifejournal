@@ -144,7 +144,7 @@ class dbfunctions {
 		if (isset($pagingparams['filteryear'])) {
 			// dates in this year and month
 			$sql .= ($sql ? ' AND ' : ' WHERE ');
-			$sql .= '(';
+			$sql .= '((';
 			$sql .= 'YEAR(startdate) = ' . $pagingparams['filteryear'];
 			if (isset($pagingparams['filtermonth'])) {
 				$sql .= ' AND MONTH(startdate) = ' . $pagingparams['filtermonth'];
@@ -183,7 +183,7 @@ class dbfunctions {
 					enddate >= STR_TO_DATE('$endate','%Y/%m/%d')
 				";
 
-			$sql .= ')';
+			$sql .= '))';
 		}
 
 		if (isset($pagingparams['searchterm'])) {
@@ -242,6 +242,11 @@ class dbfunctions {
 		return $connectable;
 	}
 
+	public function unconnectJournalEntry($recid) {
+		$sql = "UPDATE journal SET connectedid = 0, deleted = 0 WHERE recid = $recid";
+		return $this->mysqli->query($sql);
+	}
+
 	public function connectJournalEntries($recid, $connectedid) {
 		$sql = "UPDATE journal SET connectedid = $connectedid, deleted = 1 WHERE recid = $recid";
 		return $this->mysqli->query($sql);
@@ -255,6 +260,20 @@ class dbfunctions {
 		}
 
 		return $record;
+	}
+
+	function getJounalEntryWithConnections($recid) {
+		$journalentries = null;
+
+		$sql = "SELECT * FROM journal WHERE recid = $recid OR connectedid = $recid";
+
+		if ($results = $this->mysqli->query($sql)) {
+			while ($result = $results->fetch_assoc()) {
+				$journalentries[] = $result;
+			}
+		}
+
+		return $journalentries;
 	}
 
 	function getJournalBySourceId($sourcetype, $sourceid) {
