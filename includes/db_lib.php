@@ -186,6 +186,10 @@ class dbfunctions {
 			$sql .= '))';
 		}
 
+		if (isset($pagingparams['filtersource'])) {
+		    $sql .= ($sql ? ' AND ' : ' WHERE ') . 'sourcetype LIKE "' . $pagingparams['filtersource'] . '"';
+		}
+
 		if (isset($pagingparams['searchterm'])) {
 			// dates in this year and month
 			$sql .= ($sql ? ' AND ' : ' WHERE ');
@@ -284,5 +288,20 @@ class dbfunctions {
 		}
 		return $record;
 	}
+
+	function getJournalSourceTypes() {
+	    $sourcetypes = array();
+
+	    $sql = "SELECT DISTINCT(sourcetype) AS source FROM journal ORDER BY sourcetype";
+
+	    if ($results = $this->mysqli->query($sql)) {
+	        while ($result = $results->fetch_assoc()) {
+	            $sourcetypes[] = $result['source'];
+	        }
+	    }
+
+	    return $sourcetypes;
+	}
+
 
 }

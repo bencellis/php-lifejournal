@@ -1,6 +1,7 @@
 <?php
 require_once('config.php');
 require_once('db_lib.php');
+require_once(__DIR__ . '/../plugins/lib.php');
 
 function markEntryAsDeleted($recid){
 	global $dbconfig;
@@ -149,6 +150,17 @@ function getPagingParams($config) {
 	if (isset($request['includedeleted'])) {
 		$pagingparams['includedeleted'] = $request['includedeleted'];
 	}
+
+	if (isset($request['filtersource'])) {
+	    if ($request['filtersource'] == 'all') {
+	        if (isset($pagingparams['filtersource'])) {
+	            unset($pagingparams['filtersource']);
+	        }
+	    }else{
+	        $pagingparams['filtersource'] = $request['filtersource'];
+	    }
+	}
+
 	if (isset($request['filteryear'])) {
 		if ($request['filteryear'] == 'all') {
 			if (isset($pagingparams['filteryear'])) {
@@ -181,6 +193,10 @@ function getPagingParams($config) {
 		if (isset($pagingparams['filtermonth'])) {
 			unset($pagingparams['filtermonth']);
 		}
+		if (isset($pagingparams['filtersource'])) {
+		    unset($pagingparams['filtersource']);
+		}
+
 // 		unset($request['trecs']);		// recount the records
 // 		$pagingparams['page'] = 1; 			// leaving all the others as they are
 	}
@@ -366,6 +382,12 @@ function journalRecordExists($sourcetype, $sourceid) {
 	}
 
 	return $exists;
+}
+
+function getJournalSourcetypes() {
+    global $dbconfig;
+    $db = new dbfunctions($dbconfig);
+    return $db->getJournalSourceTypes();
 }
 
 function saveCalendarRecord($record) {

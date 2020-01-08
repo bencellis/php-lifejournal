@@ -1,15 +1,14 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+$debugging = true;
+
+if ($debugging) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
 
 require_once('includes/lib.php');
-require_once('plugins/lib.php');
-
-$pluginmanager = new pluginmanager();
-$plugins = $pluginmanager->get_all_plugins();
-die('<pre>' . print_r($plugins, true) . '</pre>');
 
 $errormsg = '';
 $successmsg = '';
@@ -44,12 +43,14 @@ $pagingparams = getPagingParams($config);			// this get paging, ordering and fil
 
 //die(print_r($pagingparams, true));
 
-$isfiltered = !empty($pagingparams['filteryear']);
+$isfiltered = (empty($pagingparams['filteryear']) || !empty($pagingparams['filtersource']));
 $issearching = !empty($pagingparams['searchterm']);
 
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
 
 $journalentries = getJournalEntries($pagingparams);
+
+$journalsources = getJournalSourcetypes();
 
 $lastdisplayr = '';
 
@@ -61,6 +62,7 @@ $deletelink = $baselink . 'delete' . '&recid=';
 $connectlink = $baselink . 'connectwith' . '&recid=';
 
 $newlink = 'editEntry.php';
+$importlink = 'importEntries.php';
 $editlink = $newlink . '?recid=';
 
 $undated = 'Undated';
@@ -107,7 +109,7 @@ $undated = 'Undated';
 					<form method="POST" action="<?php echo $paginglink; ?>" name="searchForm" id="id_searchForm" class="form-inline">
 						<div class="form-group">
 							<label for="id_searchterm">Search:</label>
-							<input type="text" name="searchterm" class="form-control" id="id_searchterm" placeholder="Search..." value="<?php echo $pagingparams['searchterm']; ?>"/>
+							<input type="text" name="searchterm" class="form-control" id="id_searchterm" placeholder="Search..." value="<?php echo isset($pagingparams['searchterm']) ? $pagingparams['searchterm'] : '' ; ?>"/>
 						</div>
 							<button type="submit" name="dosearch" class="btn btn-success">Find</button>&nbsp;
 							<button type="submit" name="clrsearch" class="btn btn-default">Clear Search</button>
@@ -119,46 +121,69 @@ $undated = 'Undated';
 		<div class="row">
 			<div class="col-md-12">
 				<div class="well well-lg">
-					<form method="POST" action="<?php echo $paginglink; ?>" name="filterForm" id="id_filterForm" class="form-inline">
-						<div class="form-group col-md-2">
+            		<div class="row">
+            			<div class="col-md-12">
 							<h4>Filter records</h4>
 						</div>
-						<div class="checkbox col-md-2" >
-							<label>
-								<strong>Include Deleted?&nbsp;</strong>
-								<input name="includedeleted" value="1" type="checkbox" <?php echo isset($pagingparams['includedeleted']) ? "checked" : ''; ?>/>
-							</label>
-						</div>
-						<div class="form-group col-md-3">
-							<label for="id_filteryear">By Year</label>
-							<select name="filteryear" class="form-control" id="id_filteryear">
-								<option value="all">All</option>
-								<?php
-									$selectedyear = isset($pagingparams['filteryear']) ? $pagingparams['filteryear'] : '';
-									echo "<option " . (($selectedyear === 0) ? 'selected' : '') . " value='0'>$undated</option>\n";
-									foreach ($years as $year) {
-										if ($year) {			// miss zero
-											echo "<option " . (($selectedyear == $year) ? 'selected' : '') . " value='$year'>$year</option>\n";
-										}
-									}
-								?>
-							</select>
-						</div>
-						<div class="form-group col-md-3">
-							<label for="id_filtermonth">And Month</label>
-							<select name="filtermonth" class="form-control" id="id_filtermonth" <?php echo (isset($pagingparams['filteryear'])) ? '': 'disabled' ?>>
-								<option value="all">All</option>
-								<?php
-									$selectedmonth = isset($pagingparams['filtermonth']) ? $pagingparams['filtermonth'] : '';
-									foreach ($months as $month) {
-										echo "<option " . (($selectedmonth == $month) ? 'selected' : '') . " value='$month'>". sprintf("%02d", $month) . "</option>\n";
-									}
-								?>
-							</select>
-						</div>
-						<button name="filterby" type="submit" class="btn btn-success">Filter</button>
-						<button name="clearfilter" type="submit" class="btn btn-default" <?php echo count($pagingparams) ? '' : 'disabled'; ?>>Clear Filter</button>
-					</form>
+            		</div>
+            		<div class="row">
+            			<div class="col-md-12">
+        					<form method="POST" action="<?php echo $paginglink; ?>" name="filterForm" id="id_filterForm" class="form-inline">
+        						<div class="checkbox col-md-1" >
+        							<label>
+        								<strong>Include Deleted?&nbsp;</strong>
+        								<input name="includedeleted" value="1" type="checkbox" <?php echo isset($pagingparams['includedeleted']) ? "checked" : ''; ?>/>
+        							</label>
+        						</div>
+        						<div class="form-group col-md-3">
+        							<label for="id_filtersource">By Source Type</label>
+        							<select name="filtersource" class="form-control" id="id_filtersource">
+        								<option value="all">All</option>
+        								<?php
+        									$selectedsource = isset($pagingparams['filtersource']) ? $pagingparams['filtersource'] : '';
+        									foreach ($journalsources as $source) {
+        										if ($source) {			// miss zero
+        											echo "<option " . (($selectedsource == $source) ? 'selected' : '') . " value='$source'>$source</option>\n";
+        										}
+        									}
+        								?>
+        							</select>
+        						</div>
+        						<div class="form-group col-md-3">
+        							<label for="id_filteryear">By Year</label>
+        							<select name="filteryear" class="form-control" id="id_filteryear">
+        								<option value="all">All</option>
+        								<?php
+        									$selectedyear = isset($pagingparams['filteryear']) ? $pagingparams['filteryear'] : '';
+        									echo "<option " . (($selectedyear === 0) ? 'selected' : '') . " value='0'>$undated</option>\n";
+        									foreach ($years as $year) {
+        										if ($year) {			// miss zero
+        											echo "<option " . (($selectedyear == $year) ? 'selected' : '') . " value='$year'>$year</option>\n";
+        										}
+        									}
+        								?>
+        							</select>
+        						</div>
+        						<div class="form-group col-md-3">
+        							<label for="id_filtermonth">And Month</label>
+        							<select name="filtermonth" class="form-control" id="id_filtermonth" <?php echo (isset($pagingparams['filteryear'])) ? '': 'disabled' ?>>
+        								<option value="all">All</option>
+        								<?php
+        									$selectedmonth = isset($pagingparams['filtermonth']) ? $pagingparams['filtermonth'] : '';
+        									foreach ($months as $month) {
+        										echo "<option " . (($selectedmonth == $month) ? 'selected' : '') . " value='$month'>". sprintf("%02d", $month) . "</option>\n";
+        									}
+        								?>
+        							</select>
+        						</div>
+        						<button name="filterby" type="submit" class="btn btn-success">Filter</button>
+        						<button name="clearfilter" type="submit" class="btn btn-default" <?php echo count($pagingparams) ? '' : 'disabled'; ?>>Clear Filter</button>
+
+        					</form>
+        				</div>
+
+        			</div>
+        			<br/>
 				</div>
 			</div>
 		</div>
@@ -181,7 +206,8 @@ $undated = 'Undated';
 				<tbody>
 					<tr>
 						<td colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
-							<a href="<?php echo $newlink; ?>"><strong>Add New Entry</strong></a>
+							<a href="<?php echo $newlink; ?>"><strong>Add New Entry</strong></a> |
+							<a href="<?php echo $importlink; ?>"><strong>Import Records</strong></a>
 						</td>
 					</tr>
 				<?php foreach ($journalentries as $entry): ?>
