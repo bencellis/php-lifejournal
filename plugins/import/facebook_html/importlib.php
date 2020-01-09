@@ -1,6 +1,7 @@
 <?php
 
 
+class import_facebook_html extends import_plugins {
 /*
  * for some reason the paragraph markers in this file
  */
