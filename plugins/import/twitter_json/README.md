@@ -1,4 +1,4 @@
-# Mukudu Journal #
+#  Life Journal #
 
 ## Twitter Tweets JSON Import Plugin ##
 

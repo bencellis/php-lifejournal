@@ -17,7 +17,6 @@ class import_ical extends import_plugins {
         if (!$sourcename) {
             $sourcename = $this->defaultsourcename;
         }
-        // die ('<pre>' . print_r($filedetails, true) . '</pre>');
 
         // Is this a iCal file?
         $message = 'Processed upload file';
@@ -27,17 +26,10 @@ class import_ical extends import_plugins {
 
         if (file_exists($filedetails['tmp_name'])) {
 
-            //$ical   = new iCalendar('datatest/benjamin.c.ellis@googlemail.com_benjamin.c.ellis@gmail.com.ics');
-            //$ical   = new iCalendar('datatest/mukudu Timesheet_423ml0252v128uhf2q02shlnuo@group.calendar.google.com.ics');
-            //$ical   = new iCalendar('datatest/Jen Shifts_eonnmicrkd2uvko2e1g8l9qqug@group.calendar.google.com.ics');
             $ical = new iCalendar($filedetails['tmp_name']);
 
-            //$events = array_slice($ical->events(), 0, 20);
             $events = $ical->events();
 
-            //die('<pre>' . print_r($events, true) . '</pre>');
-
-//             $sdate = $ical->extractDateForMySQL($events[0]['DTSTART']);
             $noofevents = $ical->event_count;
             $errorcount = 0;
             $eventcount = 0;

@@ -1,4 +1,4 @@
-# Mukudu Journal #
+#  Life Journal #
 
 ## iCal Calendar Fromat Plugin ##
 

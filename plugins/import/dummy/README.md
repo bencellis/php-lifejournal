@@ -1,4 +1,4 @@
-# Mukudu Journal #
+#  Life Journal #
 
 ## Dummy import Plugin ##
 

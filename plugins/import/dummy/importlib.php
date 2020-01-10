@@ -2,7 +2,7 @@
 /**
  * This file is a template for the development of import plugins.
  *
- * @author Benjamin Ellis <ben.ellis@mukudu.net>
+ * @author Benjamin Ellis <benjamincellis@gmail.com>
  *
  */
 
