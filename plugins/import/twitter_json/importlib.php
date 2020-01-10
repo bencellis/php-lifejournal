@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * @author Benjamin Ellis <benjamincellis@gmail.com>
+ * @author Benjamin Ellis
  *
  */
 
@@ -27,7 +27,6 @@ class import_twitter_json extends import_plugins {
         if (!$sourcename) {
             $sourcename = $this->defaultsourcename;
         }
-        // die('<pre>' . print_r($filedetails, true) . '</pre>');
 
         if ($filedetails['type'] != 'application/x-javascript') {
             throw new Exception('Can only process JSON files');
@@ -46,8 +45,6 @@ class import_twitter_json extends import_plugins {
             if ($tweets === null) {
                 throw new Exception(getJSONerror(json_last_error()));
             }
-
-            //die ('<pre>' . print_r($tweets, true) . '</pre>');
 
             $fbsourceurl = 'Facebook';
             $excludereweets = true;

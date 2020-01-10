@@ -16,8 +16,6 @@ class import_facebook_html extends import_plugins {
             $sourcename = $this->defaultsourcename;
         }
 
-
-        //die ('<pre>' . print_r($filedetails, true) . '</pre>');
         /*
          * for some reason the paragraph markers in this file
          */
@@ -119,7 +117,6 @@ class import_facebook_html extends import_plugins {
         					$dbrecord['details'] = $rawrecord['comment'];
         				}
 
-        				//echo '<pre>Contents: ' . print_r($dbrecord, true) . '</pre>';
         				if (!saveCalendarRecord($dbrecord)) {
         				    $errorcount++;
         				}

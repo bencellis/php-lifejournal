@@ -15,8 +15,6 @@ class import_rss extends import_plugins {
             $sourcename = $this->defaultsourcename;
         }
 
-        //die ('<pre>' . print_r($filedetails, true) . '</pre>');
-
         // Is this a RSS file?
         $message = 'Processed upload file - ';
         if ($filedetails['type'] != 'text/xml') {
@@ -24,7 +22,6 @@ class import_rss extends import_plugins {
         }
 
         if (file_exists($filedetails['tmp_name'])) {
-            //$rssfile = 'datatest/rss/benjyellis.net_blog_feed.xml';
 
             if (($rss = simplexml_load_file($filedetails['tmp_name'])) === false) {
             	throw new Exception("Failed to load RSS file");
@@ -73,9 +70,6 @@ class import_rss extends import_plugins {
     				continue;
     			}
 
-/*     			if ($itemcount > 10) {
-    				break;
-    			} */
     		}
 			if($errorcount) {
 			    $message .= "($errorcount Error lines)";

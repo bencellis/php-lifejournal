@@ -23,9 +23,6 @@ class import_twitter_csv extends import_plugins {
 
         if (file_exists($filedetails['tmp_name'])) {
 
-            // $tweetfile = 'datatest/midstweets.csv';
-            // $tweetfile = 'datatest/bencellistweets.csv';
-
             $tweets = file($filedetails['tmp_name']);
 
             $columns = array();
@@ -105,7 +102,6 @@ class import_twitter_csv extends import_plugins {
     			if (!journalRecordExists($dbrecord['sourcetype'], $dbrecord['sourceid'])) {
     				// let's deal with the time - 2017-03-10 13:48:52 +0000
     				if ($tstweet = DateTime::createFromFormat('Y-m-d H:i:s O', $rawrecord['timestamp'])) {
-    					//$dbrecord['rawtimestamp'] = $rawrecord['timestamp'];		// delete this at some point
     					$dbrecord['startdate'] = $tstweet->format('Y/m/d');
     					$dbrecord['starttime'] = $tstweet->format('H:i:s');
     					$dbrecord['details'] = $rawrecord['text'];

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Plugin Manager for code access to Life Journal Plugins.
+ */
 
 require_once(__DIR__ . '/locallib.php');
 
@@ -81,7 +84,13 @@ class pluginmanager {
 
 }
 
-
+/**
+ * Abstract Class for all plugins to extend.
+ *
+ * Should contain all the common functions for plugins.
+ *
+ * @author Benjamin Ellis 2019
+ */
 abstract class plugins {
 
     public function get_plugins() {

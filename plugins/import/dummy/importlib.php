@@ -2,8 +2,7 @@
 /**
  * This file is a template for the development of import plugins.
  *
- * @author Benjamin Ellis <benjamincellis@gmail.com>
- *
+ * @author Benjamin Ellis
  */
 
 class import_dummy extends import_plugins {

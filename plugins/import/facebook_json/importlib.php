@@ -1,8 +1,7 @@
 <?php
 /**
- * This file is a template for the development of import plugins.
  *
- * @author Benjamin Ellis <benjamincellis@gmail.com>
+ * @author Benjamin Ellis
  *
  */
 
@@ -46,52 +45,6 @@ class import_facebook_json extends import_plugins {
                 throw new Exception(getJSONerror(json_last_error()));
             }
 
-/*             $newposts = array_slice($posts, 0, 10);
-
-            die ('<pre>' . print_r($newposts, true) . '</pre>'); */
-
-/*
-    [1] => Array
-        (
-            [timestamp] => 1575535788
-            [attachments] => Array
-                (
-                    [0] => Array
-                        (
-                            [data] => Array
-                                (
-                                    [0] => Array
-                                        (
-                                            [external_context] => Array
-                                                (
-                                                    [url] => https://www.theguardian.com/world/2019/dec/05/samoa-measles-outbreak-families-fly-red-flags-to-request-vaccinations?CMP=share_btn_fb
-                                                )
-
-                                        )
-
-                                )
-
-                        )
-
-                )
-
-            [data] => Array
-                (
-                    [0] => Array
-                        (
-                            [post] => This -> "...that around 30% of Samoan infants were immunised last year. "  and it follows the NYC outbreak - https://edition.cnn.com/2019/09/03/health/new-york-city-measles-outbreak-over-bn/index.html
-                        )
-
-                    [1] => Array
-                        (
-                            [update_timestamp] => 1575535788
-                        )
-
-                )
-
-            [title] => Benjamin Ellis
-        )
- */
             $missrecords = array(' shared ', ' likes ', 'now friends', ' went to ', ' wrote on ');
 
             foreach ($posts as $post) {
