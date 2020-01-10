@@ -19,7 +19,7 @@ class import_plugins extends plugins {
             $pluginfile = $path . '/' . $this->pluginfilename;
             if (file_exists($pluginfile)) {
                 // TODO remove this
-                if (basename($path) == 'csv') {
+                //if (basename($path) == 'csv' || basename($path) == 'ical') {
                     require_once($pluginfile);
                     $classname = 'import_' . basename($path);
                     $plugin = new $classname();
@@ -29,7 +29,7 @@ class import_plugins extends plugins {
                             'classfile' => $pluginfile
                         );
                     }
-                }
+                //}
             }
         }
         return $this->ourplugins;

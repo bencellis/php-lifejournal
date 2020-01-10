@@ -4,7 +4,7 @@
  * EXtends the iCal Class
  */
 
-require('lib/class.iCalReader.php');
+require('ics-parser/class.iCalReader.php');
 
 class iCalendar extends ICal {
 

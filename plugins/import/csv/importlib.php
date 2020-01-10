@@ -4,8 +4,8 @@
 class import_csv extends import_plugins {
 
     private $name = 'CSV Import';
-    // private $defaultsourcename = 'CSVimport';
-    private $defaultsourcename = 'HMonitor';
+    private $defaultsourcename = 'CSVimport';
+    // private $defaultsourcename = 'HMonitor';
 
     public function get_name() {
         return $this->name;

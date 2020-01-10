@@ -2,133 +2,147 @@
 
 
 class import_facebook_html extends import_plugins {
-/*
- * for some reason the paragraph markers in this file
- */
-require_once('includes/lib.php');
 
-$name = 'Benjamin Ellis';
-$missrecords = array(' shared ', ' likes ', 'now friends', ' went to ');
+    private $name = 'Facebook HTML Timeline Import';
+    private $defaultsourcename = 'FacebookTL';
 
-$document = new DOMDocument;
-$tlfile = 'datatest/facebook-bencellis/html/timeline.htm';
-libxml_use_internal_errors(TRUE);
+    public function get_name() {
+        return $this->name;
+    }
 
-/* file needs to be preprossed as <p> are not working as expected */
+    public function process_file($filedetails, $sourcename = null) {
 
-if ($document->loadHTMLFile($tlfile)) {
-//if ($document->loadHTML(file_get_contents($tlfile))) {
-	libxml_clear_errors();
-	$document->preserveWhiteSpace = false;
+        if (!$sourcename) {
+            $sourcename = $this->defaultsourcename;
+        }
 
-	$xpath = new DOMXpath($document);
- 	$entries = $xpath->query("//div[@class='fbrecord']");
-	if (is_null($entries)) {
-		$entries = new DOMNodeList();		//empty
-	}
 
-}else{
-	die('<p>File not loaded</p>');
+        //die ('<pre>' . print_r($filedetails, true) . '</pre>');
+        /*
+         * for some reason the paragraph markers in this file
+         */
+        $missrecords = array(' shared ', ' likes ', 'now friends', ' went to ');
+
+        // Is this a HTML file?
+        $message = 'Processed upload file - ';
+        if ($filedetails['type'] != 'text/html') {
+            throw new Exception('Can only process HTML files');
+        }
+
+        if (file_exists($filedetails['tmp_name'])) {
+
+            /* file needs to be preprossed as <p> are not working as expected */
+            // Preprocessing required because of <p>s
+            // sed -i 's|p>|div class="fbrecord">\n|g' timeline.htm
+            $filecontents = file_get_contents($filedetails['tmp_name']);
+            $pattern = '/p>/';
+            $replace = "div class='fbrecord'>\n";
+            $filecontents = preg_replace($pattern, $replace, $filecontents);
+
+            $document = new DOMDocument;
+            libxml_use_internal_errors(TRUE);
+
+            // if ($document->loadHTMLFile($filedetails['tmp_name'])) {
+            if ($document->loadHTML($filecontents)) {
+            	libxml_clear_errors();
+            	$document->preserveWhiteSpace = false;
+
+            	$xpath = new DOMXpath($document);
+             	$entries = $xpath->query("//div[@class='fbrecord']");
+            	if (is_null($entries)) {
+            		$entries = new DOMNodeList();		//empty
+            	}
+
+            }else{
+            	throw new Exception('File not loaded');
+            }
+
+            if ($entries->length == 0) {
+            	//sed -i 's|p>|div class="fbrecord">\n|g' timeline.htm
+                throw new Exception('You need to preprocess this file as tags have an issue');
+            }
+
+        	$nodectr = 0;
+        	$errorcount = 0;
+        	foreach ($entries as $entry) {
+        		$rawrecord = array(
+        			'comment' => '',		// can be empty - but not both text and
+        			'text' => '',			// can be empty - FB action status (shared/likes/ etc) OR
+        			'meta' => ''
+        		);
+
+        		foreach ($entry->childNodes as $child) {
+        			if ($child->nodeName == 'div') {
+        				$rawrecord[$child->getAttribute('class')] = trim($child->textContent);
+        			}else if ($child->nodeName == '#text'){
+        				if ($rawrecord['text']) {
+        					$rawrecord['text'] .= ' ';
+        				}
+        				$rawrecord['text'] .= trim($child->textContent);
+        			}
+        		}
+
+        		//empty records are ignores
+        		if (!$rawrecord['comment'] && !$rawrecord['text']) {
+        			continue;
+        		}
+
+        		// if there is a comment - we always save the record - else we see if its a record to miss
+        		if (!$rawrecord['comment']) {
+        			foreach ($missrecords as $missthis) {
+        				if (stripos($rawrecord['text'], $missthis) !== false) {
+        					continue(2);
+        				}
+        			}
+        		}
+
+        		$nodectr++;
+
+        		$dbrecord = array(
+        		    'sourcetype' => $sourcename,
+        			'isevent' => 1
+        		);
+
+        		// date format Wednesday, 1 March 2017 at 12:59 UTC
+        		$rawrecord['meta'] = str_replace('at ', '', $rawrecord['meta']);
+        		if ($thisdate = DateTime::createFromFormat('l, j F Y H:i e', $rawrecord['meta'])) {
+        			$dbrecord['sourceid'] = $thisdate->getTimestamp();
+        			if (!journalRecordExists($dbrecord['sourcetype'], $dbrecord['sourceid'])) {
+        				$dbrecord['startdate'] = $thisdate->format('Y/m/d');
+        				$dbrecord['starttime'] = $thisdate->format('H:i:s');
+
+        				if ($rawrecord['text'] && $rawrecord['comment']) {
+        					$dbrecord['details'] = $rawrecord['text'] . ' ~ ' . $rawrecord['comment'];
+        				}else if($rawrecord['text']) {
+        					$dbrecord['details'] = $rawrecord['text'];
+        				}else{
+        					$dbrecord['details'] = $rawrecord['comment'];
+        				}
+
+        				//echo '<pre>Contents: ' . print_r($dbrecord, true) . '</pre>';
+        				if (!saveCalendarRecord($dbrecord)) {
+        				    $errorcount++;
+        				}
+        			}else{
+        			    $errorcount++;
+        			}
+        		}else{
+        		    $errorcount++;
+        		}
+        		if ($nodectr > 50) {
+        		    break;
+        		}
+        	}
+        	if($errorcount) {
+        	    $message .= "($errorcount Error lines)";
+        	}else{
+        	    $message .= ' No errors encountered';
+        	}
+        }else{
+            throw new Exception('Uploaded file is missing.');
+        }
+
+        return $message;
+    }
+
 }
-
-if ($entries->length == 0) {
-	//sed -i 's|p>|div class="fbrecord">\n|g' timeline.htm
-	die('You need to preprocess this file as <p> tags have an issue');
-}
-
-?>
-
-<?php include_once('includes/header.php'); ?>
-
-<?php include_once('includes/navigation.php'); ?>
-
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-        	<p>Processing Facebook <?php echo $entries->length; ?> timeline items</p>
-         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-			<?php
-				$nodectr = 0;
-				foreach ($entries as $entry) {
-					$rawrecord = array(
-						'comment' => '',		// can be empty - but not both text and
-						'text' => '',			// can be empty - FB action status (shared/likes/ etc) OR
-						'meta' => ''
-					);
-
-					foreach ($entry->childNodes as $child) {
-						if ($child->nodeName == 'div') {
-							$rawrecord[$child->getAttribute('class')] = trim($child->textContent);
-						}else if ($child->nodeName == '#text'){
-							if ($rawrecord['text']) {
-								$rawrecord['text'] .= ' ';
-							}
-							$rawrecord['text'] .= trim($child->textContent);
-						}
-					}
-
-					//empty records are ignores
-					if (!$rawrecord['comment'] && !$rawrecord['text']) {
-						continue;
-					}
-
-					// if there is a comment - we always save the record - else we see if its a record to miss
-					if (!$rawrecord['comment']) {
-						foreach ($missrecords as $missthis) {
-							if (stripos($rawrecord['text'], $missthis) !== false) {
-								continue(2);
-							}
-						}
-					}
-
-					$nodectr++;
-
-					$dbrecord = array(
-						'sourcetype' => 'FacebookTL',
-						'isevent' => 1
-					);
-
-					// date format Wednesday, 1 March 2017 at 12:59 UTC
-					$rawrecord['meta'] = str_replace('at ', '', $rawrecord['meta']);
-					if ($thisdate = DateTime::createFromFormat('l, j F Y H:i e', $rawrecord['meta'])) {
-						$dbrecord['sourceid'] = $thisdate->getTimestamp();
-						if (!journalRecordExists($dbrecord['sourcetype'], $dbrecord['sourceid'])) {
-							$dbrecord['startdate'] = $thisdate->format('Y/m/d');
-							$dbrecord['starttime'] = $thisdate->format('H:i:s');
-
-							if ($rawrecord['text'] && $rawrecord['comment']) {
-								$dbrecord['details'] = $rawrecord['text'] . ' ~ ' . $rawrecord['comment'];
-							}else if($rawrecord['text']) {
-								$dbrecord['details'] = $rawrecord['text'];
-							}else{
-								$dbrecord['details'] = $rawrecord['comment'];
-							}
-
-							//echo '<pre>Contents: ' . print_r($dbrecord, true) . '</pre>';
-							if (saveCalendarRecord($dbrecord)) {
-								echo "<p>Record '" . $dbrecord['sourceid'] . "' successfully saved</p>";
-							}else{
-								echo "<p>Failed to save record '" . $dbrecord['sourceid'] . "'</p>";
-							}
-						}else{
-							echo "<p>Record '" . $dbrecord['sourceid'] . "' already exists</p>";
-						}
-					}else{
-						echo "<p>Failed to make a date for '".  $rawrecord['meta'] . "'</p>\n";
-					}
-
-/* 					if ($nodectr > 50) {
-						break;
-					} */
-				}
-			?>
-         </div>
-      </div>
-
-    </div> <!-- /container -->
-    <hr>
-
-<?php include_once('includes/footer.php'); ?>
