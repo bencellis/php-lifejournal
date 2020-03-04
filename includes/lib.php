@@ -171,7 +171,7 @@ function getPagingParams($config) {
 		}
 	}
 	if (isset($request['filtermonth'])) {
-		if ($pagingparams['filteryear']) {			// only if a filter year is selected
+		if (!empty($pagingparams['filteryear'])) {			// only if a filter year is selected
 			if ($request['filtermonth'] == 'all') {
 				if (isset($pagingparams['filtermonth'])){
 					unset($pagingparams['filtermonth']);

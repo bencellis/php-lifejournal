@@ -40,7 +40,7 @@ class dbfunctions {
 
 	public function getAllEntryYears() {
 		$years = array();
-		$sql = "SELECT DISTINCT(YEAR(startdate)) AS theyear FROM journal";
+		$sql = "SELECT DISTINCT(YEAR(startdate)) AS theyear FROM journal ORDER BY theyear DESC";
 		if ($results = $this->mysqli->query($sql)) {
 			while ($result = $results->fetch_assoc()) {
 				$years[] = $result['theyear'];
