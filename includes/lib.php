@@ -3,6 +3,10 @@ require_once('config.php');
 require_once('db_lib.php');
 require_once(__DIR__ . '/../plugins/lib.php');
 
+function getVersion() {
+   return('20200330-01');
+}
+
 function markEntryAsDeleted($recid){
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
@@ -519,13 +523,13 @@ function ProcessPostData($params) {
 					}
 				}
 			}else{
-				if ($dbparams['recid']) {
+				//if ($dbparams['recid']) {
 					// we need to reset all the date and fields
-					$dbparams['startdate'] = 0;
+					unset($dbparams['startdate']);      // To get a null value;
 					$dbparams['starttime'] = "00:00:00";
 					$dbparams['enddate'] = 'null';
 					$dbparams['endtime'] = "00:00:00";
-				}
+				//}
 			}
 
 			// before we do this - lets make sure enddate < startdate

@@ -1,6 +1,7 @@
     <div class="container">
       <footer>
         <p>&copy; <?php echo $title .  ' ' . date("Y") ?></p>
+         <p>This Version: <?php echo $version; ?></p>
       </footer>
 	</div>
 

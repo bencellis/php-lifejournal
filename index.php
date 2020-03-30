@@ -9,6 +9,7 @@ if ($debugging) {
 }
 
 require_once('includes/lib.php');
+$version = getVersion();
 
 $errormsg = '';
 $successmsg = '';
