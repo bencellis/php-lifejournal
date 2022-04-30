@@ -77,6 +77,26 @@ $undated = 'Undated';
 
 <?php include_once('includes/navigation.php'); ?>
 
+	<!-- Modal -->
+	<div class="modal fade" id="viewEntry" tabindex="-1" role="dialog" aria-labelledby="viewEntryLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="viewEntryLabel">View Entry</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div id="fullentrytext" class="modal-body">
+					This is where the text should go.
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<?php if ($ishome): ?>
 	    <div class="jumbotron" style="background: url('assets/images/site-image.jpg') no-repeat right">
 	      <div class="container">
@@ -241,7 +261,13 @@ $undated = 'Undated';
 					<tr>
 						<td><?php echo $entry['recid']; ?></td>
 						<td><?php echo $entry['date']; ?></td>
-						<td><?php echo str_replace("\n", '<br />', $entry['details']); ?></td>
+						<td class="entrydetails">
+							<?php echo str_replace("\n", '<br />', $entry['details']); ?>
+							<?php if (substr(trim($entry['details']), strlen(trim($entry['details'])) - 3) == '...') :?>
+    							&nbsp;
+    							<span data-id="<?php echo $entry['recid']; ?>" class="glyphicon glyphicon-eye-open viewentry"></span>
+    						<?php endif; ?>
+						</td>
 						<td><?php echo $entry['source']; ?></td>
 						<?php if (isset($pagingparams['includedeleted'])) :?>
 							<td><?php echo $entry['deleted']; ?></td>

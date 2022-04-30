@@ -355,6 +355,16 @@ function getJounalEntry($recid) {
 	return $db->getJournalEntry($recid);
 }
 
+function getJournalEntryText($recid, $forhtml = true) {
+    if ($record = getJounalEntry($recid)) {
+        if ($forhtml) {
+            $record['details'] = str_replace("\n", '<br />', $record['details']);
+        }
+        return($record['details']);
+    }
+    return "";
+}
+
 function getJounalEntryWithConnections($recid) {
 	global $dbconfig;
 	$db = new dbfunctions($dbconfig);

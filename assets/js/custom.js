@@ -25,6 +25,25 @@ $(function() {
 		}
 	});
 	
+	$('.viewentry').click(function(e){
+		var id = $(this).data('id');
+		$.ajax({
+		    type:'get',
+		    url:'getentrydetails.php',
+		    data: {
+				"id" : id
+			},
+		    dataType: "json",
+		    success: function(response) {
+				$('#fullentrytext').html(response);
+		    },
+		    error: function(response) {
+				$('#fullentrytext').html("Error get details for record " + id);
+		    }
+		});
+		$("#viewEntry").modal("show");
+	});
+	
 	$('#id_filteryear').change(function(e){
 		if ( $(this).val() == 'all' || $(this).val() == 0 ) {
 			$('#id_filtermonth').val('all');
