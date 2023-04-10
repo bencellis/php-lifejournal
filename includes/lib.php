@@ -4,7 +4,7 @@ require_once('db_lib.php');
 require_once(__DIR__ . '/../plugins/lib.php');
 
 function getVersion() {
-   return('20200330-01');
+   return('20230410-01');
 }
 
 function markEntryAsDeleted($recid){

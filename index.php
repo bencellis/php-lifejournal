@@ -234,7 +234,7 @@ $undated = 'Undated';
 				<?php foreach ($journalentries as $entry): ?>
 
 					<?php
-						if ($entry['realdate'] == "0000-00-00") {
+					if ($entry['realdate'] == "0000-00-00" || $entry['realdate'] === null) {
 							$entry['date'] = $undated;
 						}else{
 							$entrydate = DateTime::createFromFormat('Y-m-d', $entry['realdate']);
