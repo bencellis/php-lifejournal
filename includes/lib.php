@@ -4,7 +4,7 @@ require_once('db_lib.php');
 require_once(__DIR__ . '/../plugins/lib.php');
 
 function getVersion() {
-   return('20230410-01');
+   return('20230611-01');
 }
 
 function markEntryAsDeleted($recid){
@@ -49,39 +49,51 @@ function connectJournalEntries($mainid, $connectedid) {
 }
 
 function getJournalEntries($pagingparams) {
-	global $dbconfig, $config;
+	global $dbconfig;
 	$db = new dbfunctions($dbconfig);
 	$journalentries = array();
 
 	// lets get the raw records
-	if ($rawrecs = $db->getJournalEntries($pagingparams)) {
-		foreach ($rawrecs as $rawrec) {
-			// massage the data
-			$journalentry['recid'] = $rawrec['recid'];
-			$journalentry['deleted'] = $rawrec['deleted'] ? 'Deleted' : 'No';
-			$journalentry['source'] = $rawrec['sourcetype'];
-			$journalentry['realdate'] = $rawrec['startdate'];		// for display purposes
-
-			// details
-			$detaillength = $config['detaillength'];
-			if (strlen($rawrec['details']) > $detaillength) {
-				// reduce length
-				$journalentry['details'] = substr($rawrec['details'], 0, $detaillength);
-				// now add elipses from last space
-				$journalentry['details'] = substr($rawrec['details'], 0, strrpos($journalentry['details'], ' ')) . ' ...';
-			}else{
-				$journalentry['details'] = $rawrec['details'];
-			}
-
-			// date stuff
-			$journalentry['date'] = getDisplayDate($rawrec);
-
-			$journalentries[] = $journalentry;
-		}
-	}
+	$journalentries = massagentries($db->getJournalEntries($pagingparams));
 
 	return $journalentries;
 
+}
+
+function massagentries($rawrecs) {
+    global $config;
+    foreach ($rawrecs as $rawrec) {
+        // massage the data
+        $journalentry['recid'] = $rawrec['recid'];
+        $journalentry['deleted'] = $rawrec['deleted'] ? 'Deleted' : 'No';
+        $journalentry['source'] = $rawrec['sourcetype'];
+        $journalentry['realdate'] = $rawrec['startdate'];		// for display purposes
+        
+        // details
+        $detaillength = $config['detaillength'];
+        if (strlen($rawrec['details']) > $detaillength) {
+            // reduce length
+            $journalentry['details'] = substr($rawrec['details'], 0, $detaillength);
+            // now add elipses from last space
+            $journalentry['details'] = substr($rawrec['details'], 0, strrpos($journalentry['details'], ' ')) . ' ...';
+        }else{
+            $journalentry['details'] = $rawrec['details'];
+        }
+        
+        // date stuff
+        $journalentry['date'] = getDisplayDate($rawrec);
+        
+        $journalentries[] = $journalentry;
+    }
+    return $journalentries;
+}
+
+// TODO integrate with getJournalEntries()
+function getOnThisDay($day, $month) {
+    global $dbconfig;
+    $db = new dbfunctions($dbconfig);
+    $journalentries = massagentries($db->getOnThisDay($day, $month));
+    return $journalentries;
 }
 
 /**

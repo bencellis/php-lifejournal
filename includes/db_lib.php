@@ -233,6 +233,24 @@ class dbfunctions {
 		return $journalentries;
 	}
 
+	public function getOnThisDay($day, $month) {
+ 	    $sql = "
+    	    SELECT * FROM journal
+    	       WHERE deleted = 0
+    	       AND (MONTH(startdate) = $month && (DAY(startdate) = $day))
+    	       ORDER BY startdate DESC, starttime ASC 
+               LIMIT 0, 500
+        ";
+	    
+	    if ($results = $this->mysqli->query($sql)) {
+	        while ($result = $results->fetch_assoc()) {
+	            $journalentries[] = $result;
+	        }
+	    }
+	    
+	    return $journalentries;
+	}
+	
 	public function isEntryConnectable($connectedid) {
 		$connectable = false;
 
@@ -256,7 +274,7 @@ class dbfunctions {
 		return $this->mysqli->query($sql);
 	}
 
-	function getJournalEntry($recid) {
+	public function getJournalEntry($recid) {
 		$record = null;
 		$sql = "SELECT * FROM journal WHERE recid = $recid";
 		if ($results = $this->mysqli->query($sql)) {
@@ -266,7 +284,7 @@ class dbfunctions {
 		return $record;
 	}
 
-	function getJounalEntryWithConnections($recid) {
+	public function getJounalEntryWithConnections($recid) {
 		$journalentries = null;
 
 		$sql = "SELECT * FROM journal WHERE recid = $recid OR connectedid = $recid";
@@ -280,7 +298,7 @@ class dbfunctions {
 		return $journalentries;
 	}
 
-	function getJournalBySourceId($sourcetype, $sourceid) {
+	public function getJournalBySourceId($sourcetype, $sourceid) {
 		$record = null;
 		$sql = "SELECT * FROM journal WHERE sourcetype LIKE '$sourcetype' AND sourceid LIKE '$sourceid'";
 		if ($results = $this->mysqli->query($sql)) {
@@ -289,7 +307,7 @@ class dbfunctions {
 		return $record;
 	}
 
-	function getJournalSourceTypes() {
+	public function getJournalSourceTypes() {
 	    $sourcetypes = array();
 
 	    $sql = "SELECT DISTINCT(sourcetype) AS source FROM journal ORDER BY sourcetype";
@@ -302,6 +320,5 @@ class dbfunctions {
 
 	    return $sourcetypes;
 	}
-
 
 }

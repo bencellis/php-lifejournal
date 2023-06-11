@@ -48,19 +48,29 @@ $isfiltered = (empty($pagingparams['filteryear']) || !empty($pagingparams['filte
 $issearching = !empty($pagingparams['searchterm']);
 
 //die('<pre>' . print_r($pagingparams, true) . '</pre>');
-
-$journalentries = getJournalEntries($pagingparams);
+list($otday, $otmonth) = explode('-', date('d-m'));
+//die('<pre>' . $otday . ' -> ' . $otmonth . '</pre>');
+if (isset($_REQUEST['action']) && ($_REQUEST['action'] == 'onthisday')) {
+    if (($otday = $_REQUEST['thisday']) && ($otmonth = $_REQUEST['thismonth'])) {
+        //die('<pre>' . $otday . ' -> ' . $otmonth . '</pre>');
+        $journalentries = getOnThisDay((int) $otday, (int) $otmonth);
+    } else {
+        die("Invalid Parameters");
+    }
+} else {
+    $journalentries = getJournalEntries($pagingparams);
+}
 
 $journalsources = getJournalSourcetypes();
 
 $lastdisplayr = '';
-
 
 // edit links
 $paginglink = 'index.php';
 $baselink =  $paginglink . '?action=';
 $deletelink = $baselink . 'delete' . '&recid=';
 $connectlink = $baselink . 'connectwith' . '&recid=';
+$onthisdaylink = $baselink . 'onthisday' . '&thisday=' . $otday . '&thismonth=' . $otmonth; 
 
 $newlink = 'editEntry.php';
 $importlink = 'importEntries.php';
@@ -128,6 +138,7 @@ $undated = 'Undated';
 			<div class="col-md-12">
 				<div class="well well-lg text-right">
 					<form method="POST" action="<?php echo $paginglink; ?>" name="searchForm" id="id_searchForm" class="form-inline">
+						<a href="<?php echo $onthisdaylink; ?>"><button type="button" class="btn btn-info">On This Day</button></a>
 						<div class="form-group">
 							<label for="id_searchterm">Search:</label>
 							<input type="text" name="searchterm" class="form-control" id="id_searchterm" placeholder="Search..." value="<?php echo isset($pagingparams['searchterm']) ? $pagingparams['searchterm'] : '' ; ?>"/>
