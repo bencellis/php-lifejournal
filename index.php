@@ -242,63 +242,71 @@ $undated = 'Undated';
 							<a href="<?php echo $importlink; ?>"><strong>Import Records</strong></a>
 						</td>
 					</tr>
-				<?php foreach ($journalentries as $entry): ?>
-
-					<?php
-					if ($entry['realdate'] == "0000-00-00" || $entry['realdate'] === null) {
-							$entry['date'] = $undated;
-						}else{
-							$entrydate = DateTime::createFromFormat('Y-m-d', $entry['realdate']);
-						}
-						$recid = $entry['recid'];
-					?>
-					<?php if (!$isfiltered): ?>
-						<?php if ($entry['date'] != $undated && $lastdisplayr != $entrydate->format('Y')): ?>
-							<tr>
-								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
-									<?php $lastdisplayr = $entrydate->format('Y'); ?>
-									<strong><?php echo $lastdisplayr; ?></strong>
-								</td>
-							</tr>
-						<?php elseif ($entry['date'] == $undated && ($lastdisplayr != $undated)): ?>
-							<tr>
-								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
-									<?php $lastdisplayr = $undated; ?>
-									<strong><?php echo $lastdisplayr; ?></strong>
-								</td>
-							</tr>
-						<?php endif; ?>
-					<?php endif; ?>
-					<tr>
-						<td><?php echo $entry['recid']; ?></td>
-						<td><?php echo $entry['date']; ?></td>
-						<td class="entrydetails">
-							<?php echo str_replace("\n", '<br />', $entry['details']); ?>
-							<?php if (substr(trim($entry['details']), strlen(trim($entry['details'])) - 3) == '...') :?>
-    							&nbsp;
-    							<span data-id="<?php echo $entry['recid']; ?>" class="glyphicon glyphicon-eye-open viewentry"></span>
+				<?php if (!empty($journalentries)) :?>
+    				<?php foreach ($journalentries as $entry): ?>
+    
+    					<?php
+    					if ($entry['realdate'] == "0000-00-00" || $entry['realdate'] === null) {
+    							$entry['date'] = $undated;
+    						}else{
+    							$entrydate = DateTime::createFromFormat('Y-m-d', $entry['realdate']);
+    						}
+    						$recid = $entry['recid'];
+    					?>
+    					<?php if (!$isfiltered): ?>
+    						<?php if ($entry['date'] != $undated && $lastdisplayr != $entrydate->format('Y')): ?>
+    							<tr>
+    								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
+    									<?php $lastdisplayr = $entrydate->format('Y'); ?>
+    									<strong><?php echo $lastdisplayr; ?></strong>
+    								</td>
+    							</tr>
+    						<?php elseif ($entry['date'] == $undated && ($lastdisplayr != $undated)): ?>
+    							<tr>
+    								<td class="text-center" colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
+    									<?php $lastdisplayr = $undated; ?>
+    									<strong><?php echo $lastdisplayr; ?></strong>
+    								</td>
+    							</tr>
     						<?php endif; ?>
+    					<?php endif; ?>
+    					<tr>
+    						<td><?php echo $entry['recid']; ?></td>
+    						<td><?php echo $entry['date']; ?></td>
+    						<td class="entrydetails">
+    							<?php echo str_replace("\n", '<br />', $entry['details']); ?>
+    							<?php if (substr(trim($entry['details']), strlen(trim($entry['details'])) - 3) == '...') :?>
+        							&nbsp;
+        							<span data-id="<?php echo $entry['recid']; ?>" class="glyphicon glyphicon-eye-open viewentry"></span>
+        						<?php endif; ?>
+    						</td>
+    						<td><?php echo $entry['source']; ?></td>
+    						<?php if (isset($pagingparams['includedeleted'])) :?>
+    							<td><?php echo $entry['deleted']; ?></td>
+    						<?php endif; ?>
+    						<td style="vertical-align: middle" class="text-center">
+    							<!-- <a href="#" id="id_viewrecord" class="editLink editEntry" title="View">
+    								<span class="glyphicon glyphicon-eye-open"></span>
+    							</a>&nbsp;-->
+    							<a href="<?php echo $editlink . $recid; ?>" class="editLink editEntry" title="Edit">
+    								<span class="glyphicon glyphicon-wrench"></span>
+    							</a>&nbsp;
+    							<a href="<?php echo $deletelink . $recid; ?>" class="editLink delEntry" title="Delete">
+    								<span class="glyphicon glyphicon-remove"></span>
+    							</a>&nbsp;
+    							<a href="<?php echo $connectlink . $recid; ?>" class="editLink linkEntry" title="Connect">
+    								<span class="glyphicon glyphicon-link"></span>
+    							</a>
+    						</td>
+    					</tr>
+    				<?php endforeach; ?>
+				<?php else: ?>
+					<tr>
+						<td colspan="<?php echo isset($pagingparams['includedeleted']) ? 6 : 5; ?>">
+							<p>No Records have been found.</p>
 						</td>
-						<td><?php echo $entry['source']; ?></td>
-						<?php if (isset($pagingparams['includedeleted'])) :?>
-							<td><?php echo $entry['deleted']; ?></td>
-						<?php endif; ?>
-						<td style="vertical-align: middle" class="text-center">
-							<!-- <a href="#" id="id_viewrecord" class="editLink editEntry" title="View">
-								<span class="glyphicon glyphicon-eye-open"></span>
-							</a>&nbsp;-->
-							<a href="<?php echo $editlink . $recid; ?>" class="editLink editEntry" title="Edit">
-								<span class="glyphicon glyphicon-wrench"></span>
-							</a>&nbsp;
-							<a href="<?php echo $deletelink . $recid; ?>" class="editLink delEntry" title="Delete">
-								<span class="glyphicon glyphicon-remove"></span>
-							</a>&nbsp;
-							<a href="<?php echo $connectlink . $recid; ?>" class="editLink linkEntry" title="Connect">
-								<span class="glyphicon glyphicon-link"></span>
-							</a>
-						</td>
-					</tr>
-				<?php endforeach; ?>
+					</tr>					
+				<?php endif; ?>
 				</tbody>
 			</table>
         </div>
@@ -309,7 +317,7 @@ $undated = 'Undated';
 				<div>
 					<hr />
 					<?php
-						if (count($journalentries)) {
+					if (!empty($journalentries)) {
 							echo getPagingBar($paginglink, $pagingparams);
 						}
 					?>
