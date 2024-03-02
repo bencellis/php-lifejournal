@@ -4,7 +4,7 @@ require_once('db_lib.php');
 require_once(__DIR__ . '/../plugins/lib.php');
 
 function getVersion() {
-   return('20231202-00');
+   return('20240302-00');
 }
 
 function markEntryAsDeleted($recid){
@@ -62,6 +62,7 @@ function getJournalEntries($pagingparams) {
 
 function massagentries($rawrecs) {
     global $config;
+    $journalentries = array();
     foreach ($rawrecs as $rawrec) {
         // massage the data
         $journalentry['recid'] = $rawrec['recid'];
